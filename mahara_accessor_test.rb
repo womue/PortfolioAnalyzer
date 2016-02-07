@@ -1,16 +1,16 @@
 require 'test/unit'
 require 'highline/import'
 
-require_relative 'group_analyzer'
+require_relative 'mahara_accessor'
 
-class GroupAnalyzerTest < Test::Unit::TestCase
+class MaharaAccessorTest < Test::Unit::TestCase
 
   # Called before every test method runs. Can be used
   # to set up fixture information.
   def setup
     username = 'Please insert your moopaed username here'
     password = 'Please insert your moopaed password here'
-    @ga = GroupAnalyzer.new( username, password)
+    @ga = MaharaAccessor.new(username, password)
   end
 
   # Called after every test method runs. Can be used to tear

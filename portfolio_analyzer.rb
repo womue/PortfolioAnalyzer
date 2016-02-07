@@ -16,15 +16,18 @@
 require 'rubygems'
 require 'highline/import'
 
-require_relative 'group_analyzer'
-require_relative 'student_portfolio'
+require_relative 'mahara_accessor'
+require_relative 'mahara_member'
+
+MOOPAED_LOGIN_URL = 'https://www.moopaed.de/moodle/login/index.php'
+MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=3'
 
 module PortfolioAnalyzer
   username = ask("Enter your username:  ") { |q| q.echo = true }
   #password = ask("Enter your password:  ") { |q| q.echo = "*" }
   password = ask("Enter your password:  ") { |q| q.echo = true }
 
-  group_analyzer = GroupAnalyzer.new(username, password)
+  group_analyzer = MaharaAccessor.new(username, password, MOOPAED_LOGIN_URL, MAHARA_DASHBOARD_URL)
   agent = group_analyzer.agent
   mahara_dashboard_page = group_analyzer.open_mahara
 
@@ -73,10 +76,8 @@ module PortfolioAnalyzer
   select_option( form, 'setlimitselect', '500')
   mahara_group_members_page_2 = form.submit
 
-  # we might have to submit here ...
-
   ### extract portfolios
-  portfolios = []
+  group_members = []
   main_column = mahara_group_members_page_2.css('div.main-column')[0]
   #mahara_group_members_page_2.css('div.list-group-item').each do |row|
   main_column.css('div.list-group-item').each do |row|
@@ -88,18 +89,29 @@ module PortfolioAnalyzer
     img_src = img['src']
     span = row.css('span')[1]
     if (span.text.to_s.include? 'Teilnehmer') then
-      # puts "adding " + name + ": " + link + ", src=" + img_src
-      student = StudentPortfolio.new(name, link, groupname, grouplink)
-      portfolios << student
+      puts "adding " + name + ": " + link + ", src=" + img_src
+      member = MaharaMember.new(name, link, groupname, grouplink)
+      group_members << member
     end
   end
 
-  puts "extracted mumber of portfolio users: " + portfolios.length.to_s
+  puts "extracted mumber of portfolio users: " + group_members.length.to_s
 
   # extract view information
-  portfolios.each do |p|
-    mahara_user_views_page = agent.get(p.mainlink)
-
+  group_members.each do |member|
+    puts "portfolios for member " + member.owner_name
+    mahara_user_views_page = agent.get(member.mainlink)
+    # find block containing
+    portfolios_block = mahara_user_views_page.css('.bt-myviews')[0]
+    #puts portfolios_block.text
+    if (portfolios_block == nil) then
+      puts "WARNING: portfolio view block '#{member.owner_name}\'s Portfolios' not found on member's dashboard page"
+      puts "Unable to extract portofolio view list!"
+      next
+    end
+    portfolios_block.css('a').each do |a|
+      puts a.text.strip + ': ' + a['href']
+    end
   end
 
   puts  "done"

@@ -1,9 +1,12 @@
 #
 # Project: PortfolioAnalyzer
-# File: group_analyzer.rb
+# File: mahara_accessor.rb
 #
 # Description:
-# GroupAnalyzer class, providing analysis and access to Mahara groups
+# MaharaAccessor class, providing access to Mahara groups and bundling the
+# webscrapting functionality required to extract information from mahara group member pages.
+# This file might have to be mostly rewritten to provide Mahara access for a specific
+# Mahara service.
 #
 # Author(s):
 # Wolfgang Mueller, Univ. of Education Weingarten, MEVIS (mueller@md-phw.de)
@@ -17,23 +20,21 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 require 'mechanize'
 
-MOOPAED_LOGIN_PAGE = 'https://www.moopaed.de/moodle/login/index.php'
+class MaharaAccessor
+  attr_reader :agent, :moodle_login_url, :mahara_dahboard_url, :mahara_dashboard_page
 
-MAHARA_DASHBOARD_PAGE = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=3'
-
-class GroupAnalyzer
-  attr_reader :agent, :mahara_dashboard_page
-
-  def initialize( username, password)
+  def initialize(username, password, login_url, mahara_dashboard_url)
     @username = username
     @password = password
     @agent = Mechanize.new()
+    @moodle_login_url = login_url
+    @mahara_dahboard_url = mahara_dashboard_url
     @mahara_dashboard_page = nil
   end
 
   def open_mahara
     # open moodle
-    signin_page = @agent.get(MOOPAED_LOGIN_PAGE)
+    signin_page = @agent.get(@moodle_login_url)
     my_moodle_dashboard_page = signin_page.form_with(:id => 'login') do |form|
       form.username = @username
       form.password = @password
@@ -41,7 +42,7 @@ class GroupAnalyzer
 
     # now try to access the mahara page directly ... seems much easier than following
     # the link on the page ...
-    @mahara_dashboard_page = @agent.get(MAHARA_DASHBOARD_PAGE)
+    @mahara_dashboard_page = @agent.get(@mahara_dahboard_url)
 
     return @mahara_dashboard_page
   end

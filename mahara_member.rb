@@ -1,6 +1,6 @@
 #
 # Project: PortfolioAnalyzer
-# File: StudentPortfolio
+# File: MaharaMember
 #
 # Description:
 # 
@@ -11,7 +11,7 @@
 # (c) Univ. of Education Weingarten, MEVIS, 2016
 #
 
-class StudentPortfolio
+class MaharaMember
   attr_reader :owner_name, :mainlink, :groupid, :grouplink
   attr_accessor :pages
 
