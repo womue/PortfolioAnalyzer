@@ -1,7 +1,7 @@
 README
 ======
 
-This toolset is intended to analyze Mahara portfolios. The idea is to allow teachers to get an overview on a group's set of portfolios using web-scraping, with a number of statistics.
+This toolset is intended to analyze Mahara-based learning e-portfolios. The idea is to allow teachers to get an overview on a group's set of portfolios using web-scraping, with a number of statistics.
 
 As a matter of fact, major aspects of this toolset concern the authorized access to such Mahara portofolios, which in practice may differ from organization to organization.
 Also, the web-scraping approach may have to be adapted based on the Mahara style sheets applied in one's organization.

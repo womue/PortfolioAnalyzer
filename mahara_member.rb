@@ -12,11 +12,11 @@
 #
 
 class MaharaMember
-  attr_reader :owner_name, :mainlink, :groupid, :grouplink
+  attr_reader :name, :mainlink, :groupid, :grouplink
   attr_accessor :pages
 
   def initialize( name, mainlink, groupid, grouplink)
-    @owner_name = name
+    @name = name
     @mainlink = mainlink
     @groupid = groupid
     @grouplink = grouplink
