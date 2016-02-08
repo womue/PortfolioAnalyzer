@@ -13,12 +13,13 @@
 
 require 'json'
 require 'json/add/core'
+require 'words_counted'
 
 require_relative 'jsonable'
 
 class PortfolioView < Jsonable
   attr_reader :owner, :url, :page, :portfolio_title, :title
-  attr_accessor :images, :links, :local_storage_dir
+  attr_accessor :local_storage_dir
 
   # Constructs a PortfolioView instance
   # Params:
@@ -32,8 +33,28 @@ class PortfolioView < Jsonable
     @page = page
     @portfolio_title = portfolio_title
     @title = view_title
-    @images = nil
-    @link = nil
+  end
+
+  # Returns the user's image nodes on this page.
+  def uploaded_images
+    page.images_with(:src => /download/)
+  end
+
+  # returns the number of images on this page
+  # TODO exclude standard Mahara template images
+  def image_count
+    page.images.length
+  end
+
+  # Returns the user's link nodes on this page.
+  def links
+    page.links_with(:src => /download/)
+  end
+
+  # Returns the number of words on this page.
+  def words
+    counter = WordsCounted::Counter.new @page.text
+    return counter.word_count
   end
 
   # Save the whole page to a local file

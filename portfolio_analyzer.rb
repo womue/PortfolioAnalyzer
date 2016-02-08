@@ -71,6 +71,25 @@ module PortfolioAnalyzer
     form.field_with(:id => field_id).value = value
   end
 
+  def self.extract_members(group_members, grouplink, groupname, main_column)
+    group_members = []
+    main_column.css('div.list-group-item').each do |row|
+      student = nil
+      a = row.css('a')[0]
+      link = a['href']
+      name = a.text.strip
+      img = row.css('img')[0]
+      img_src = img['src']
+      span = row.css('span')[1]
+      if (span.text.to_s.include? 'Teilnehmer') then
+        puts "adding " + name + ": " + link + ", src=" + img_src
+        member = MaharaMember.new(name, link, groupname, grouplink)
+        group_members << member
+      end
+    end
+    group_members
+  end
+
   username = ask("Enter your username:  ") { |q| q.echo = true }
   #password = ask("Enter your password:  ") { |q| q.echo = "*" }        # currently disabled for ussage inside of RubyMine
   password = ask("Enter your password:  ") { |q| q.echo = true }
@@ -88,7 +107,6 @@ module PortfolioAnalyzer
   portfolio_download_dir = ask('> ') { |q| q.default = DEFAULT_PORTFOLIO_DOWNLOAD_DIR }
 
   FileUtils::mkdir_p portfolio_download_dir unless Dir.exists? portfolio_download_dir
-
 
   group_links = mahara_accessor.extract_group_links
 
@@ -118,28 +136,16 @@ module PortfolioAnalyzer
 
   puts "selecting complete view of members ..."
   form = mahara_group_members_page_1.form_with(:class => 'form-pagination js-pagination form-inline pagination-page-limit dropdown')
-  select_option( form, 'setlimitselect', '500')
+  select_option(form, 'setlimitselect', '500')
   mahara_group_members_page_2 = form.submit
 
   ### extract portfolios
   # TODO: the extraction part should go somewhere to the MaharaAccessor class
   group_members = []
   main_column = mahara_group_members_page_2.css('div.main-column')[0]
+
   #mahara_group_members_page_2.css('div.list-group-item').each do |row|
-  main_column.css('div.list-group-item').each do |row|
-    student = nil
-    a = row.css('a')[0]
-    link = a['href']
-    name = a.text.strip
-    img = row.css('img')[0]
-    img_src = img['src']
-    span = row.css('span')[1]
-    if (span.text.to_s.include? 'Teilnehmer') then
-      puts "adding " + name + ": " + link + ", src=" + img_src
-      member = MaharaMember.new(name, link, groupname, grouplink)
-      group_members << member
-    end
-  end
+  group_members = extract_members(group_members, grouplink, groupname, main_column)
 
   puts "extracted mumber of portfolio users: " + group_members.length.to_s
 
@@ -157,20 +163,69 @@ module PortfolioAnalyzer
       next
     end
     portfolio_views = []
+    i = 0
     portfolios_block.css('a.outer-link').each do |a|
       portfolio_view = mahara_accessor.get_portfolio_view member, a.text.strip, a['href']
       portfolio_views << portfolio_view
+
+      # in parallel, get access to the corresponding nokogiri node for modification
+      mahara_accessor.agent.get('https://yahoo.com')
+      nokogiri_doc = mahara_accessor.agent.page.parser
+
       # localy save the portfolio for possible further processing
       say "saving view '#{portfolio_view.title}' for member #{member.name} ..."
+
       member_download_dir = group_download_dir + "/" + member.name.gsub(/\s/, '_')
       views_download_dir = member_download_dir + "/views"
-      view_download_path = views_download_dir + "/" + "view#{portfolio_views.length}.html"
+
+      # save uploaded_images first ... to adapt the documents image URLs to the local path
+      img_download_dir = member_download_dir + "/uploaded_images"
+      FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite
+      puts "#{portfolio_view.uploaded_images.length} uploaded_images found!"
+      portfolio_view.uploaded_images.each do |image|
+        basenamematch = /(?<=\?)[A-Za-z0-9=]*/.match(File.basename image.uri.to_s)
+        break unless basenamematch != nil
+        basename = basenamematch[0]
+        image_download_path = img_download_dir + "/" + basename
+        say "saving image to #{image_download_path} ..."
+        begin
+          image.fetch.save image_download_path
+        rescue Mechanize::ResponseCodeError => ex
+          puts "An error of type #{ex.class} happened, message is #{ex.message}"
+        end
+
+        # adapt image urls in page document to match localy available uploaded_images
+
+        # this is would we like to do, but working with mechanize apparently does not
+        # provide us with the means to modify nodes directly ...
+        # image.src = image_download_path
+        #
+        # therefore, we switch to the nokogiri API here
+        tags = {
+            'img' => 'src'
+        }
+        nokogiri_doc.search(tags.keys.join(',')).each do |node|
+          url_param = tags[node.name]
+          src = node[url_param]
+          if (src == image.src) then
+            puts "adapting view image #{src} to #{image_download_path}"
+            node[url_param] = image_download_path
+          end
+        end
+      end
+
+      # puts doc.to_html
+
+
+      view_download_path = views_download_dir + "/" + "view#{i}.html"
+      i = i + 1
       FileUtils::mkdir_p views_download_dir unless Dir.exists? views_download_dir or overwrite
       say "saving view '#{portfolio_view.title}' to #{view_download_path} ..."
-      portfolio_view.save mahara_accessor.agent, view_download_path
+      # portfolio_view.save mahara_accessor.agent, view_download_path
     end
+    member.views = portfolio_views
   end
 
-  puts  "done"
+  puts "done"
 
 end
