@@ -1,6 +1,6 @@
 #
 # Project: PortfolioAnalyzer
-# File: reference_analyzer.rb
+# File: portfolio_analyzer.rb
 #
 # Description:
 # PortfolioAnalyzer main file. Contains general functionalities.
@@ -10,12 +10,13 @@
 #
 # (c) Univ. of Education Weingarten, MEVIS, 2016
 #
-# Usage:
+# Usage: ruby portfolio_analyzer
 #
 
 require 'rubygems'
 require 'fileutils'
 require 'highline/import'
+require 'fastimage'
 
 require_relative 'mahara_accessor'
 require_relative 'mahara_member'
@@ -89,6 +90,24 @@ module PortfolioAnalyzer
     end
     group_members
   end
+
+  def self.suffix_for_image_type(image_type)
+    case image_type
+      when :png
+        return ".png"
+      when :gif
+        return ".gif"
+      when :jpeg
+        return ".jpg"
+      when :svg
+        return ".svg"
+      when :bmp
+        return ".bmp"
+      else
+        say "suffix_for_image_type: warning - unknown image type: " + image_type.to_s
+    end
+  end
+
 
   username = ask("Enter your username:  ") { |q| q.echo = true }
   #password = ask("Enter your password:  ") { |q| q.echo = "*" }        # currently disabled for ussage inside of RubyMine
@@ -183,15 +202,32 @@ module PortfolioAnalyzer
       FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite
       puts "#{portfolio_view.uploaded_images.length} uploaded_images found!"
       portfolio_view.uploaded_images.each do |image|
-        basenamematch = /(?<=\?)[A-Za-z0-9=]*/.match(File.basename image.uri.to_s)
+        image_type = nil
+        basenamematch = /(?<=\?)[A-Za-z0-9=.]*/.match(File.basename image.uri.to_s)
         break unless basenamematch != nil
         basename = basenamematch[0]
         image_download_path = img_download_dir + "/" + basename
+
         say "saving image to #{image_download_path} ..."
         begin
           image.fetch.save image_download_path
         rescue Mechanize::ResponseCodeError => ex
           puts "An error of type #{ex.class} happened, message is #{ex.message}"
+        end
+
+        # try determining image type after download ... it does not work trying this before ... :-(
+        begin
+          image_type = FastImage.type(image_download_path, :raise_on_failure => true)
+        rescue FastImage::FastImageException => e
+          say "error identifying image type: " + e.to_s
+        end
+
+        new_image_download_path = image_download_path + suffix_for_image_type(image_type) unless (image_type == nil)
+
+        # rename image file now to contain the correct image suffix
+        if (image_type != nil) then
+          File.rename(image_download_path, new_image_download_path)
+          image_download_path = new_image_download_path
         end
 
         # adapt image urls in page document to match localy available uploaded_images
@@ -214,14 +250,15 @@ module PortfolioAnalyzer
         end
       end
 
-      # puts doc.to_html
-
-
       view_download_path = views_download_dir + "/" + "view#{i}.html"
       i = i + 1
       FileUtils::mkdir_p views_download_dir unless Dir.exists? views_download_dir or overwrite
       say "saving view '#{portfolio_view.title}' to #{view_download_path} ..."
       portfolio_view.save mahara_accessor.agent, view_download_path
+      # instead, we should do something like:
+      # save nokogiri_doc.to_html
+      # since the Mechanize based save method of the portfolio view does not recognize changes
+      # made on the nokogiti doc level ...
     end
     member.views = portfolio_views
   end
