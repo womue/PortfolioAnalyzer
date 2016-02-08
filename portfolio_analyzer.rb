@@ -221,7 +221,7 @@ module PortfolioAnalyzer
       i = i + 1
       FileUtils::mkdir_p views_download_dir unless Dir.exists? views_download_dir or overwrite
       say "saving view '#{portfolio_view.title}' to #{view_download_path} ..."
-      # portfolio_view.save mahara_accessor.agent, view_download_path
+      portfolio_view.save mahara_accessor.agent, view_download_path
     end
     member.views = portfolio_views
   end
