@@ -28,23 +28,9 @@ DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
 
 module PortfolioAnalyzer
 
-  def self.select_group_old(group_links)
-    groupid = 0
-    loop do
-      puts "Available groups:"
-      group_links.length.times do |i|
-        puts "#{i}:" + group_links[i].text
-      end
-      puts "#{group_links.length}: exit"
-
-      input = ask("Select groupid:  ") { |q| q.echo = true }
-      groupid = input.to_i
-
-      break if not (groupid < 0 or groupid > group_links.length)
-    end
-    return groupid
-  end
-
+  # displays a menu to the user to select from a list of Mahara member groups
+  # params:
+  # - group_names: an Array containing the possible selections
   def self.select_group(group_names)
     say "Select mahara group for analysis"
     choose do |menu|
@@ -64,6 +50,10 @@ module PortfolioAnalyzer
     end
   end
 
+  # selects the specified option in a mechanize page form
+  # - form: the form in which the option is to be selected
+  # - field_id: the id of the field where the selection shall be performed
+  # - text: text specifying the option to select
   def self.select_option(form, field_id, text)
     value = nil
     form.field_with(:id => field_id).options.each { |o| value = o if o.value == text }
@@ -91,6 +81,9 @@ module PortfolioAnalyzer
     group_members
   end
 
+  # determines the suffix for image files for an image type
+  # params:
+  # - image_type: the id of the type for which the suffix shall be determined
   def self.suffix_for_image_type(image_type)
     case image_type
       when :png
@@ -172,6 +165,19 @@ module PortfolioAnalyzer
   # TODO: the extractio part should go somewhere to the MaharaAccessor class
   group_members.each do |member|
     puts "portfolios for member " + member.name
+
+    member_download_dir = group_download_dir + "/" + member.name.gsub(/\s/, '_')
+
+    # create member download dir if necessary
+    if (not Dir.exist? member_download_dir) then
+      begin
+        Dir.mkdir member_download_dir
+      rescue Exception => e
+        say "error creating download dir for member " + member.name + ": " + e.to_s
+        next
+      end
+    end
+
     mahara_user_views_page = agent.get(member.mainlink)
     # find block containing
     portfolios_block = mahara_user_views_page.css('.bt-myviews')[0]
@@ -194,7 +200,6 @@ module PortfolioAnalyzer
       # localy save the portfolio for possible further processing
       say "saving view '#{portfolio_view.title}' for member #{member.name} ..."
 
-      member_download_dir = group_download_dir + "/" + member.name.gsub(/\s/, '_')
       views_download_dir = member_download_dir + "/views"
 
       # save uploaded_images first ... to adapt the documents image URLs to the local path
@@ -215,7 +220,7 @@ module PortfolioAnalyzer
           puts "An error of type #{ex.class} happened, message is #{ex.message}"
         end
 
-        # try determining image type after download ... it does not work trying this before ... :-(
+        # try determining image type after download ... it did not work doing this before ... :-(
         begin
           image_type = FastImage.type(image_download_path, :raise_on_failure => true)
         rescue FastImage::FastImageException => e
@@ -261,6 +266,7 @@ module PortfolioAnalyzer
       # made on the nokogiti doc level ...
     end
     member.views = portfolio_views
+    member.save member_download_dir
   end
 
   puts "done"

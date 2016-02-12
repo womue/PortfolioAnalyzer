@@ -18,17 +18,15 @@ require 'words_counted'
 require_relative 'jsonable'
 
 class PortfolioView < Jsonable
-  attr_reader :owner, :url, :page, :portfolio_title, :title
+  attr_accessor :url, :page, :portfolio_title, :title
   attr_accessor :local_storage_dir
 
   # Constructs a PortfolioView instance
   # Params:
-  # - owner: name of the Mahara member owning this view
   # - url: internal Mahara url of this view
   # - portfolio_title: title of the portfolio this view belongs to
   # - view_title: title of this view
-  def initialize owner, url, page, portfolio_title, view_title
-    @owner = owner
+  def initialize url=nil, page=nil, portfolio_title=nil, view_title=nil
     @url = url
     @page = page
     @portfolio_title = portfolio_title
@@ -57,6 +55,26 @@ class PortfolioView < Jsonable
     return counter.word_count
   end
 
+  # override to_json to include a special handling of pages (which are not serialized)
+  def to_json_old(*a)
+    hash = {}
+    self.instance_variables.each do |var|
+      hash[var] = self.instance_variable_get var unless (var == :@page)
+    end
+    hash.to_json(*a)
+  end
+
+  def to_json_new(*a)
+    res = {'json_class' => self.class.name}
+    hash = {}
+    self.instance_variables.each do |var|
+      hash[var] = self.instance_variable_get var unless (var == :@page)
+    end
+    res['data'] = hash
+    res.to_json(*a)
+  end
+
+
   # Save the whole page to a local file
   # Params:
   # - agent: mechanize agent to perform the download; this one should been authorized to access the member pages via a login
@@ -65,4 +83,9 @@ class PortfolioView < Jsonable
     agent.pluggable_parser.default = Mechanize::Download
     agent.get(url).save(path)
   end
+
+  def ==(obj)
+    (@page == obj.page) and (@portfolio_title == obj.portfolio_title) and (@title == obj.title) and (@url = obj.url)
+  end
+
 end

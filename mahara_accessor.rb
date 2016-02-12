@@ -79,7 +79,7 @@ class MaharaAccessor
     # Try to extract the view title. That is, we are checking for an h1 tag ...
     title = guess_title(member, view_page)
 
-    view = PortfolioView.new member, url, view_page, portfolio_name, title
+    view = PortfolioView.new url, view_page, portfolio_name, title
     return view
   end
 

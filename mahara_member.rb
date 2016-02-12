@@ -11,9 +11,14 @@
 # (c) Univ. of Education Weingarten, MEVIS, 2016
 #
 
-class MaharaMember
-  attr_reader :name, :mainlink, :groupid, :grouplink
-  attr_accessor :views
+require 'json'
+
+require_relative 'jsonable'
+
+class MaharaMember < Jsonable
+  attr_accessor :name, :mainlink, :groupid, :grouplink, :views
+
+  SERIALIZATION_FILE_NAME = 'memberinfo.json'
 
   # construct a new instance
   # params
@@ -21,7 +26,7 @@ class MaharaMember
   # - mainlink: link to the member's external main page
   # - groupid; group id the user is connected to
   # - grouplink: link of the group's dashboard page, collecting all information on the group members
-  def initialize( name, mainlink, groupid, grouplink)
+  def initialize(name=nil, mainlink=nil, groupid=nil, grouplink=nil)
     @name = name
     @mainlink = mainlink
     @groupid = groupid
@@ -29,4 +34,16 @@ class MaharaMember
     @views = []
   end
 
+  def save dir
+    filename = dir + "/" + SERIALIZATION_FILE_NAME
+    File.open(filename, 'w') { |file| file.write(self.to_json) }
+  end
+
+  def self.load dir
+    filename = dir + "/" + SERIALIZATION_FILE_NAME
+    s = File.open(filename, 'r') { |file| file.read }
+    member = MaharaMember.new
+    member.from_json! s
+    member
+  end
 end
