@@ -20,6 +20,7 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
 require 'mechanize'
 
+require_relative 'portfolio_analyzer_tools'
 require_relative 'portfolio_view'
 
 class MaharaAccessor
@@ -66,7 +67,6 @@ class MaharaAccessor
     # However, I decided to go the easy way here with some knowledge on how the url must look like
 
     return @mahara_dashboard_page.links_with(:href => /mahara\/group\/view/)
-
   end
 
   # Extracts a portfolio view page.
@@ -77,13 +77,16 @@ class MaharaAccessor
   def get_portfolio_view member, portfolio_name, url
     view_page = @agent.get(url)
     # Try to extract the view title. That is, we are checking for an h1 tag ...
-    title = guess_title(member, view_page)
+    title = guess_title(view_page)
 
     view = PortfolioView.new url, view_page, portfolio_name, title
     return view
   end
 
-  def guess_title(member, view_page)
+  # Guesses the title from a view page
+  # params:
+  # - view_page: the Mahara view page
+  def guess_title(view_page)
     title = "unknown"
     h1 = view_page.css('h1')
     if (h1 != nil)
@@ -92,5 +95,49 @@ class MaharaAccessor
       title = h1.text
     end
     title
+  end
+
+  # extracts all members from the main column of a Mahara groups page
+  # params:
+  # - main_column: the main column
+  # - grouplink: the link to the corresponding group to be passed to the members to be created
+  # - groupname: the name to the corresponding group to be passed to the members to be created
+  def extract_members(main_column, grouplink, groupname)
+    group_members = []
+    main_column.css('div.list-group-item').each do |row|
+      student = nil
+      a = row.css('a')[0]
+      link = a['href']
+      name = a.text.strip
+      img = row.css('img')[0]
+      img_src = img['src']
+      span = row.css('span')[1]
+      if (span.text.to_s.include? 'Teilnehmer') then
+        puts "adding " + name + ": " + link + ", src=" + img_src
+        member = MaharaMember.new(name, link, groupname, grouplink)
+        group_members << member
+      end
+    end
+    group_members
+  end
+
+  # Extracts the group members from a Mahara group page
+  # params:
+  # - grouplink: link to the corresponding Mahara group page
+  # - groupname: the id of this group
+  def extract_group_members(grouplink, groupname)
+    mahara_group_overview_page = @agent.get(grouplink)
+    # selecting group member page ...
+    mahara_group_members_page_1 = mahara_group_overview_page.link_with(:href => /mahara\/group\/members/).click
+    # selecting complete view of members
+    form = mahara_group_members_page_1.form_with(:class => 'form-pagination js-pagination form-inline pagination-page-limit dropdown')
+    PortfolioAnalyzerTools.select_option(form, 'setlimitselect', '500')
+    mahara_group_members_page_2 = form.submit
+
+    # extract members
+    main_column = mahara_group_members_page_2.css('div.main-column')[0]
+    # an alternative, more general approach might be: mahara_group_members_page_2.css('div.list-group-item').each do |row|
+
+    group_members = extract_members(main_column, grouplink, groupname)
   end
 end

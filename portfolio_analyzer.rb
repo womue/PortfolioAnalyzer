@@ -18,6 +18,7 @@ require 'fileutils'
 require 'highline/import'
 require 'fastimage'
 
+require_relative 'portfolio_analyzer_tools'
 require_relative 'mahara_accessor'
 require_relative 'mahara_member'
 
@@ -28,58 +29,6 @@ DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
 
 module PortfolioAnalyzer
 
-  # displays a menu to the user to select from a list of Mahara member groups
-  # params:
-  # - group_names: an Array containing the possible selections
-  def self.select_group(group_names)
-    say "Select mahara group for analysis"
-    choose do |menu|
-      menu.index = :number
-      menu.index_suffix = ") "
-
-      menu.prompt = "Select group:  "
-      group_names.each do |link|
-        menu.choice link do
-          return group_names.index(link)
-        end
-      end
-      menu.choice :exit do
-        return group_names.length
-      end
-
-    end
-  end
-
-  # selects the specified option in a mechanize page form
-  # - form: the form in which the option is to be selected
-  # - field_id: the id of the field where the selection shall be performed
-  # - text: text specifying the option to select
-  def self.select_option(form, field_id, text)
-    value = nil
-    form.field_with(:id => field_id).options.each { |o| value = o if o.value == text }
-
-    raise ArgumentError, "No option with text '#{text}' in field '#{field_id}'" unless value
-    form.field_with(:id => field_id).value = value
-  end
-
-  def self.extract_members(group_members, grouplink, groupname, main_column)
-    group_members = []
-    main_column.css('div.list-group-item').each do |row|
-      student = nil
-      a = row.css('a')[0]
-      link = a['href']
-      name = a.text.strip
-      img = row.css('img')[0]
-      img_src = img['src']
-      span = row.css('span')[1]
-      if (span.text.to_s.include? 'Teilnehmer') then
-        puts "adding " + name + ": " + link + ", src=" + img_src
-        member = MaharaMember.new(name, link, groupname, grouplink)
-        group_members << member
-      end
-    end
-    group_members
-  end
 
   # determines the suffix for image files for an image type
   # params:
@@ -101,9 +50,13 @@ module PortfolioAnalyzer
     end
   end
 
+  say "Please enter the directory for local member portfolios storage:"
+  portfolio_download_dir = ask('> ') { |q| q.default = DEFAULT_PORTFOLIO_DOWNLOAD_DIR }
+
+  FileUtils::mkdir_p portfolio_download_dir unless Dir.exists? portfolio_download_dir
 
   username = ask("Enter your username:  ") { |q| q.echo = true }
-  #password = ask("Enter your password:  ") { |q| q.echo = "*" }        # currently disabled for ussage inside of RubyMine
+  #password = ask("Enter your password:  ") { |q| q.echo = "*" }        # currently disabled for usage inside of RubyMine
   password = ask("Enter your password:  ") { |q| q.echo = true }
 
   mahara_accessor = MaharaAccessor.new(username, password, MOOPAED_LOGIN_URL, MAHARA_DASHBOARD_URL)
@@ -115,14 +68,9 @@ module PortfolioAnalyzer
     Kernel.exit(1) if (groupid == group_links.length)
   end
 
-  say "Please enter the directory for downloading member portfolios:"
-  portfolio_download_dir = ask('> ') { |q| q.default = DEFAULT_PORTFOLIO_DOWNLOAD_DIR }
-
-  FileUtils::mkdir_p portfolio_download_dir unless Dir.exists? portfolio_download_dir
-
   group_links = mahara_accessor.extract_group_links
 
-  groupid = select_group(group_links)
+  groupid = PortfolioAnalyzerTools.select_choice("Select mahara group for analysis", group_links)
 
   Kernel.exit(0) if (groupid == group_links.length)
 
@@ -141,28 +89,11 @@ module PortfolioAnalyzer
   FileUtils::mkdir_p group_download_dir unless Dir.exists? group_download_dir or overwrite
 
   # extract members
-  # TODO: this should go somewhere to the MaharaAccessor class
-  mahara_group_overview_page = agent.get(grouplink)
-  puts 'selecting group member page ...'
-  mahara_group_members_page_1 = mahara_group_overview_page.link_with(:href => /mahara\/group\/members/).click
-
-  puts "selecting complete view of members ..."
-  form = mahara_group_members_page_1.form_with(:class => 'form-pagination js-pagination form-inline pagination-page-limit dropdown')
-  select_option(form, 'setlimitselect', '500')
-  mahara_group_members_page_2 = form.submit
-
-  ### extract portfolios
-  # TODO: the extraction part should go somewhere to the MaharaAccessor class
-  group_members = []
-  main_column = mahara_group_members_page_2.css('div.main-column')[0]
-
-  #mahara_group_members_page_2.css('div.list-group-item').each do |row|
-  group_members = extract_members(group_members, grouplink, groupname, main_column)
-
+  group_members = mahara_accessor.extract_group_members(grouplink, groupname)
   puts "extracted mumber of portfolio users: " + group_members.length.to_s
 
   # extract view information
-  # TODO: the extractio part should go somewhere to the MaharaAccessor class
+  # TODO: the extract part should go somewhere to the MaharaAccessor class
   group_members.each do |member|
     puts "portfolios for member " + member.name
 
