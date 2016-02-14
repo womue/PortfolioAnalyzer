@@ -44,4 +44,15 @@ module PortfolioAnalyzerTools
 
     end
   end
+
+end
+
+class String
+  # File activesupport/lib/active_support/core_ext/string/filters.rb, line 16
+  def squish!
+    gsub!(/\A[[:space:]]+/, '')
+    gsub!(/[[:space:]]+\z/, '')
+    gsub!(/[[:space:]]+/, ' ')
+    self
+  end
 end
