@@ -31,9 +31,6 @@ DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
 
 DEFAULT_SOLR_PORT = 8983
 DEFAULT_SOLR_URL = "http://localhost:#{DEFAULT_SOLR_PORT}/solr/MaharaPortfolio/"
-# DEFAULT_SOLR_URL = "http://localhost/solr/MaharaPortfolio/"
-#DEFAULT_SOLR_URL = "http://www.esit4sip.eu/solr/portfolios/"
-
 
 module PortfolioAnalyzer
 
@@ -230,7 +227,7 @@ module PortfolioAnalyzer
 
       view_download_path = views_download_dir + "/" + "view#{i}.html"
       i = i + 1
-      FileUtils::mkdir_p views_download_dir unless Dir.exists? views_download_dir or overwrite?
+      FileUtils::mkdir_p views_download_dir unless Dir.exists? views_download_dir or overwrite
       say "saving view '#{portfolio_view.title}' to #{view_download_path} ..."
       portfolio_view.save mahara_accessor.agent, view_download_path
       # instead, we should do something like:

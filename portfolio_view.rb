@@ -93,8 +93,7 @@ class PortfolioView < Jsonable
   end
 
   def text
-    # res = html.gsub(/<\/?[^>]*>/, ' ').gsub(/\n\n+/, '\n').gsub(/^\n|\n$/, ' ').squish!
-    res = 'Test Test Test'
+    res = html.gsub(/<\/?[^>]*>/, ' ').gsub(/\n\n+/, '\n').gsub(/^\n|\n$/, ' ').squish!
     # puts "in PortfolioView.text: #{res}"
     res
   end
@@ -102,8 +101,8 @@ class PortfolioView < Jsonable
   # Generates a hash representation for the specified view connected to the specified member, suitable
   # for passing to Solr for adding as a document
   def to_solr(member)
-    {:id => @url, :text_en => text, :portfolio_title_de => @portfolio_title,
-     :title_de => @title, :local_storage_dir => @local_storage_dir, :author_de => member.name}
+    {:url => @url, :text => text, :portfolio_title => @portfolio_title,
+     :title => @title, :local_storage_dir => @local_storage_dir, :author => member.name}
   end
 
   def ==(obj)
