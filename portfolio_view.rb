@@ -14,9 +14,11 @@
 require 'json'
 require 'json/add/core'
 require 'words_counted'
+require 'sanitize'
 
 require_relative 'jsonable'
 require_relative 'portfolio_analyzer_tools'
+require_relative 'html_to_plain_text'
 
 class PortfolioView < Jsonable
   attr_accessor :url, :page, :portfolio_title, :title
@@ -25,6 +27,7 @@ class PortfolioView < Jsonable
   # Constructs a PortfolioView instance
   # Params:
   # - url: internal Mahara url of this view
+  # - page: the page belonging to this view
   # - portfolio_title: title of the portfolio this view belongs to
   # - view_title: title of this view
   def initialize url=nil, page=nil, portfolio_title=nil, view_title=nil
@@ -80,6 +83,7 @@ class PortfolioView < Jsonable
   # - agent: mechanize agent to perform the download; this one should been authorized to access the member pages via a login
   # - path: the path to store the data
   def save agent, path
+    say "saving view '#{title}' to #{path} ..."
     agent.pluggable_parser.default = Mechanize::Download
     agent.get(url).save(path)
   end
@@ -93,7 +97,9 @@ class PortfolioView < Jsonable
   end
 
   def text
-    res = html.gsub(/<\/?[^>]*>/, ' ').gsub(/\n\n+/, '\n').gsub(/^\n|\n$/, ' ').squish!
+    #res = html.gsub(/<\/?[^>]*>/, ' ').gsub(/\n\n+/, '\n').gsub(/^\n|\n$/, ' ').squish!
+    text = Sanitize.clean(html, remove_contents: ['script', 'style'])
+    res = HtmlToPlainText.convert_to_text(text)
     # puts "in PortfolioView.text: #{res}"
     res
   end
