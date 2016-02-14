@@ -27,6 +27,7 @@ class PortfolioView < Jsonable
   # Constructs a PortfolioView instance
   # Params:
   # - url: internal Mahara url of this view
+  # - page: the page belonging to this view
   # - portfolio_title: title of the portfolio this view belongs to
   # - view_title: title of this view
   def initialize url=nil, page=nil, portfolio_title=nil, view_title=nil
@@ -82,6 +83,7 @@ class PortfolioView < Jsonable
   # - agent: mechanize agent to perform the download; this one should been authorized to access the member pages via a login
   # - path: the path to store the data
   def save agent, path
+    say "saving view '#{title}' to #{path} ..."
     agent.pluggable_parser.default = Mechanize::Download
     agent.get(url).save(path)
   end
