@@ -72,7 +72,7 @@ module PortfolioAnalyzer
     opt.on('-p', '--password PASSWORD') { |o| options[:password] = o }
     opt.on('-d', '--local_dir LOCAL_PORTFOLIO_DIR') { |o| options[:local_dir] = o }
     opt.on('-s', '--solr_url SOLR_URL') { |o| options[:solr_url] = o }
-    opt.on('-i', '--use_solr') { |o| options[:use_solr] = true }
+    opt.on('-i', '--use_solr') { |o| options[:use_solr] = "y" }
   end.parse!
 
   portfolio_download_dir = get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
@@ -115,8 +115,10 @@ module PortfolioAnalyzer
 
   FileUtils::mkdir_p group_download_dir unless Dir.exists? group_download_dir or overwrite
 
-  say "Add views to Solr?:"
-  add_to_solr = ask('> ') { |q| q.default = 'y' } == 'y'
+  # say "Add views to Solr?:"
+  # add_to_solr = ask('> ') { |q| q.default = 'y' } == 'y'
+  add_to_solr = get_parameter_from_option_or_ask(options[:use_solr], "Add views to Solr?: ", "n") == "y"
+  say "adding documents to solr" if add_to_solr
 
   solr_url = nil
   solr_url = get_parameter_from_option_or_ask(options[:solr_url], "Enter Solr URL: ", DEFAULT_SOLR_URL) if add_to_solr
@@ -175,7 +177,7 @@ module PortfolioAnalyzer
 
       # save uploaded_images first ... to adapt the documents image URLs to the local path
       img_download_dir = member_download_dir + "/uploaded_images"
-      FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite?
+      FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite
       puts "#{portfolio_view.uploaded_images.length} uploaded_images found!"
       portfolio_view.uploaded_images.each do |image|
         image_type = nil
