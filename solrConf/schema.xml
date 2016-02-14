@@ -97,6 +97,8 @@
 
     <field name="local_storage_dir"     type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="author"                type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="author_de"             type="text_de" indexed="true"/>
+    <copyField source="author" dest="author_de"/>
     <field name="url"                   type="string" indexed="true" required="true" stored="true" multiValued="false"/>
     <field name="text"                  type="text_de" indexed="true" stored="true" multiValued="true"/>
 
