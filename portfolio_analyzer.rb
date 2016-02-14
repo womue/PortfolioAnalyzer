@@ -15,8 +15,10 @@
 
 require 'rubygems'
 require 'fileutils'
+require 'optparse'
 require 'highline/import'
 require 'fastimage'
+require 'rsolr'
 
 require_relative 'portfolio_analyzer_tools'
 require_relative 'mahara_accessor'
@@ -26,6 +28,12 @@ MOOPAED_LOGIN_URL = 'https://www.moopaed.de/moodle/login/index.php'
 MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=3'
 
 DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
+
+DEFAULT_SOLR_PORT = 8983
+DEFAULT_SOLR_URL = "http://localhost:#{DEFAULT_SOLR_PORT}/solr/MaharaPortfolio/"
+# DEFAULT_SOLR_URL = "http://localhost/solr/MaharaPortfolio/"
+#DEFAULT_SOLR_URL = "http://www.esit4sip.eu/solr/portfolios/"
+
 
 module PortfolioAnalyzer
 
@@ -50,14 +58,33 @@ module PortfolioAnalyzer
     end
   end
 
-  say "Please enter the directory for local member portfolios storage:"
-  portfolio_download_dir = ask('> ') { |q| q.default = DEFAULT_PORTFOLIO_DOWNLOAD_DIR }
+  def self.get_parameter_from_option_or_ask(option_value, msg, default_value=nil, echo=true)
+    return option_value unless option_value == nil
+    say msg
+    ask('> ') { |q| q.default = default_value; q.echo = echo }
+  end
+
+  # parse options
+  options = {}
+  OptionParser.new do |opt|
+    opt.on('-m', '--moodle_url MOODLE_URL') { |o| options[:moodle_url] = o }
+    opt.on('-u', '--username USERNAME') { |o| options[:username] = o }
+    opt.on('-p', '--password PASSWORD') { |o| options[:password] = o }
+    opt.on('-d', '--local_dir LOCAL_PORTFOLIO_DIR') { |o| options[:local_dir] = o }
+    opt.on('-s', '--solr_url SOLR_URL') { |o| options[:solr_url] = o }
+    opt.on('-i', '--use_solr') { |o| options[:use_solr] = true }
+  end.parse!
+
+  portfolio_download_dir = get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
+  say "using portfolio download dir '#{portfolio_download_dir}'"
 
   FileUtils::mkdir_p portfolio_download_dir unless Dir.exists? portfolio_download_dir
 
-  username = ask("Enter your username:  ") { |q| q.echo = true }
-  #password = ask("Enter your password:  ") { |q| q.echo = "*" }        # currently disabled for usage inside of RubyMine
-  password = ask("Enter your password:  ") { |q| q.echo = true }
+  username = get_parameter_from_option_or_ask(options[:username], "Enter your username:  ")
+  say "using username '#{username}'"
+
+  # password = get_parameter_from_option_or_ask( options[:password], "Enter your password:  ", nil, "*")    # currently disabled for usage inside of RubyMine
+  password = get_parameter_from_option_or_ask(options[:password], "Enter your password:  ", nil, true)
 
   mahara_accessor = MaharaAccessor.new(username, password, MOOPAED_LOGIN_URL, MAHARA_DASHBOARD_URL)
   agent = mahara_accessor.agent
@@ -81,12 +108,26 @@ module PortfolioAnalyzer
 
   overwrite = false
   if (Dir.exists? group_download_dir) then
-    # overwrite = agree("Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data?", true)     # currently disabled for ussage inside of RubyMine
+    # overwrite? = agree("Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data?", true)     # currently disabled for ussage inside of RubyMine
     say "Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data? [y/n]"
-    overwrite = gets == "y"
+    overwrite = ask('> ') { |q| q.default = 'y' } == 'y'
   end
 
   FileUtils::mkdir_p group_download_dir unless Dir.exists? group_download_dir or overwrite
+
+  say "Add views to Solr?:"
+  add_to_solr = ask('> ') { |q| q.default = 'y' } == 'y'
+
+  solr_url = nil
+  solr_url = get_parameter_from_option_or_ask(options[:solr_url], "Enter Solr URL: ", DEFAULT_SOLR_URL) if add_to_solr
+  say "using solr server at '#{solr_url}'" if add_to_solr
+
+  solr = nil
+  solr = RSolr.connect :url => solr_url if (add_to_solr)
+
+  if (solr == nil) then
+    say "warning: connection to Solr could not be established!"
+  end
 
   # extract members
   group_members = mahara_accessor.extract_group_members(grouplink, groupname)
@@ -125,7 +166,6 @@ module PortfolioAnalyzer
       portfolio_views << portfolio_view
 
       # in parallel, get access to the corresponding nokogiri node for modification
-      mahara_accessor.agent.get('https://yahoo.com')
       nokogiri_doc = mahara_accessor.agent.page.parser
 
       # localy save the portfolio for possible further processing
@@ -135,7 +175,7 @@ module PortfolioAnalyzer
 
       # save uploaded_images first ... to adapt the documents image URLs to the local path
       img_download_dir = member_download_dir + "/uploaded_images"
-      FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite
+      FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite?
       puts "#{portfolio_view.uploaded_images.length} uploaded_images found!"
       portfolio_view.uploaded_images.each do |image|
         image_type = nil
@@ -188,13 +228,20 @@ module PortfolioAnalyzer
 
       view_download_path = views_download_dir + "/" + "view#{i}.html"
       i = i + 1
-      FileUtils::mkdir_p views_download_dir unless Dir.exists? views_download_dir or overwrite
+      FileUtils::mkdir_p views_download_dir unless Dir.exists? views_download_dir or overwrite?
       say "saving view '#{portfolio_view.title}' to #{view_download_path} ..."
       portfolio_view.save mahara_accessor.agent, view_download_path
       # instead, we should do something like:
       # save nokogiri_doc.to_html
       # since the Mechanize based save method of the portfolio view does not recognize changes
       # made on the nokogiti doc level ...
+
+      # add to Solr
+      puts "adding view to Solr ... " unless solr == nil
+      puts portfolio_view.to_solr(member)
+      solr.add portfolio_view.to_solr(member) unless solr == nil
+      # solr.add :id=>1, :price=>1.00 unless solr == nil
+      puts "done!" unless solr == nil
     end
     member.views = portfolio_views
     member.save member_download_dir
