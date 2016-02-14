@@ -36,7 +36,7 @@
         </COVERAGE_PATTERN>
       </EXTENSION>
       <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$MODULE_DIR$/portfolio_analyzer.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="-l $USER_HOME$/MaharaPortfolios -u ***REMOVED*** -p ***REMOVED*** -i -s http://www.esit4sip.eu/solr/portfolios/" />
+      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="-l /Users/paul/MaharaPortfolios -u ***REMOVED*** -p ***REMOVED*** -i -s http://www.esit4sip.eu/solr/portfolios/" />
       <method />
     </configuration>
     <configuration default="false" name="html_to_plain_text" type="RubyRunConfigurationType" factoryName="Ruby">
@@ -146,7 +146,7 @@
       <method />
     </configuration>
   </component>
-  <component name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="RVM: ruby-2.2.3" jdkType="RUBY_SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
