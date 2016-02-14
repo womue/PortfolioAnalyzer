@@ -97,6 +97,22 @@ class MaharaAccessor
     title
   end
 
+  def has_more_views?(view_page)
+    nodes = view_page.page.css('nav.custom-dropdown')
+    (nodes != nil) && (nodes.length !=0)
+  end
+
+  def subsequent_views(view_page)
+    view_selector_node = view_page.page.css('nav.custom-dropdown')[0]
+    view_link_nodes = view_selector_node.css('a')
+    links = []
+    view_link_nodes.each do |node|
+      link = node['href']
+      links << link unless link == view_page.url
+    end
+    links
+  end
+
   # extracts all members from the main column of a Mahara groups page
   # params:
   # - main_column: the main column
