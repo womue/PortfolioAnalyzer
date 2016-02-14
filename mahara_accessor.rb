@@ -121,6 +121,10 @@ class MaharaAccessor
     group_members
   end
 
+  def html
+    @page
+  end
+
   # Extracts the group members from a Mahara group page
   # params:
   # - grouplink: link to the corresponding Mahara group page

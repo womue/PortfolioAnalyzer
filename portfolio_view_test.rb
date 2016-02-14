@@ -1,5 +1,8 @@
 require 'test/unit'
 require 'json'
+require 'mechanize'
+require 'nokogiri'
+
 require_relative 'portfolio_view'
 
 class PortfolioViewTest < Test::Unit::TestCase
@@ -27,5 +30,20 @@ class PortfolioViewTest < Test::Unit::TestCase
     obj = JSON.load(json_s)
     #obj = PortfolioView.from_json! json_s
     assert_equal(@pv, obj)
+  end
+
+  def test_nokogiri_access
+    agent = Mechanize.new
+    url = 'http://www.md-phw.de'
+    mechanize_page = agent.get(url)
+    pv = PortfolioView.new url, mechanize_page, "test_nokogiri_access", "test"
+    nokogiri_doc = pv.nokogiri_doc
+    assert(nokogiri_doc.is_a?(Nokogiri::HTML::Document))
+    html = pv.html
+    assert(html.is_a?(String))
+    assert(html.match(/^<!DOCTYPE html>/))
+    text = pv.text
+    assert(text.is_a?(String))
+    assert(text.match(/^<!DOCTYPE html>/) == nil)
   end
 end

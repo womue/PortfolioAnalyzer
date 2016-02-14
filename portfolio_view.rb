@@ -16,6 +16,7 @@ require 'json/add/core'
 require 'words_counted'
 
 require_relative 'jsonable'
+require_relative 'portfolio_analyzer_tools'
 
 class PortfolioView < Jsonable
   attr_accessor :url, :page, :portfolio_title, :title
@@ -74,7 +75,6 @@ class PortfolioView < Jsonable
     res.to_json(*a)
   end
 
-
   # Save the whole page to a local file
   # Params:
   # - agent: mechanize agent to perform the download; this one should been authorized to access the member pages via a login
@@ -82,6 +82,28 @@ class PortfolioView < Jsonable
   def save agent, path
     agent.pluggable_parser.default = Mechanize::Download
     agent.get(url).save(path)
+  end
+
+  def nokogiri_doc
+    @page.parser
+  end
+
+  def html
+    nokogiri_doc.to_s
+  end
+
+  def text
+    # res = html.gsub(/<\/?[^>]*>/, ' ').gsub(/\n\n+/, '\n').gsub(/^\n|\n$/, ' ').squish!
+    res = 'Test Test Test'
+    # puts "in PortfolioView.text: #{res}"
+    res
+  end
+
+  # Generates a hash representation for the specified view connected to the specified member, suitable
+  # for passing to Solr for adding as a document
+  def to_solr(member)
+    {:id => @url, :text_en => text, :portfolio_title_de => @portfolio_title,
+     :title_de => @title, :local_storage_dir => @local_storage_dir, :author_de => member.name}
   end
 
   def ==(obj)
