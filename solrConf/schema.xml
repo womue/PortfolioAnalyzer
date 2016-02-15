@@ -90,6 +90,28 @@
        trailing underscores (e.g. _version_) are reserved.
     -->
 
+
+    <!-- fields for our application -->
+    <field name="portfolio_title"       type="text_de" indexed="true" stored="true" multiValued="false"/>
+    <field name="title"                 type="text_de" indexed="true" stored="true" multiValued="false"/>
+
+    <field name="local_storage_dir"     type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="author"                type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="author_de"             type="text_de" indexed="true"/>
+    <copyField source="author" dest="author_de"/>
+    <field name="url"                   type="string" indexed="true" required="true" stored="true" multiValued="false"/>
+    <field name="text"                  type="text_de" indexed="true" stored="true" multiValued="true"/>
+
+    <field name="indexDate"             type="date" indexed="true" stored="true" multiValued="false" />
+    <field name="lastModified"          type="date" indexed="true" stored="true" multiValued="false" />
+
+    <field name="nrImages"              type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrUploadedImages"      type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrWikipediaImages"     type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrLinks"               type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrWikipediaLinks"      type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrWords"               type="int" indexed="true" stored="true" multiValued="false" />
+
     <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
        or Solr won't start. _version_ and update log are required for SolrCloud
     -->
@@ -109,7 +131,7 @@
       in a compatible way. Any analysis applied to the <uniqueKey> should _not_ produce multiple
       tokens
     -->
-    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+    <!-- <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" /> -->
 
     <!-- Dynamic field definitions allow using convention over configuration
         for fields via the specification of patterns to match field names.
@@ -164,7 +186,7 @@
     <!-- Field to use to determine and enforce document uniqueness.
          Unless this field is marked with required="false", it will be a required field
       -->
-    <uniqueKey>id</uniqueKey>
+    <uniqueKey>url</uniqueKey>
 
     <!-- copyField commands copy one field to another at the time a document
           is added to the index.  It's used either to index the same field differently,
