@@ -102,6 +102,8 @@
     <field name="url"                   type="string" indexed="true" required="true" stored="true" multiValued="false"/>
     <field name="text"                  type="text_de" indexed="true" stored="true" multiValued="true"/>
 
+    <field name="indexDate"             type="date" indexed="true" stored="true" multiValued="false" />
+    <field name="lastModified"          type="date" indexed="true" stored="true" multiValued="false" />
 
 
 
