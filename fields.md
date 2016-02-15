@@ -26,6 +26,9 @@ Facetting can only be done on indexed and stored fields. (I think)
 * _url_: string, stored and indexed
 	* potentially copied to a standard-analyzer field so to query partial domains
 * _text_: German stemming, indexed and stored.
-* _indexDate_: Date when the document is put into index (auto-completed)
+* _indexDate_: Date when the document is put into index
 * _lastModified_: Date when the portfolio was last changed
+* _nrImages_, _nrUploadedImages_, _nrWikipediaImages_, _nrLinks_, _nrWikipediaLinks_, _nrWords_: integers, indexed and stored.
+* 
+* 
 
