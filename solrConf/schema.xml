@@ -105,7 +105,12 @@
     <field name="indexDate"             type="date" indexed="true" stored="true" multiValued="false" />
     <field name="lastModified"          type="date" indexed="true" stored="true" multiValued="false" />
 
-
+    <field name="nrImages"              type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrUploadedImages"      type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrWikipediaImages"     type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrLinks"               type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrWikipediaLinks"      type="int" indexed="true" stored="true" multiValued="false" />
+    <field name="nrWords"               type="int" indexed="true" stored="true" multiValued="false" />
 
     <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
        or Solr won't start. _version_ and update log are required for SolrCloud
