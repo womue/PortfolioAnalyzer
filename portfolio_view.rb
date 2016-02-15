@@ -35,6 +35,7 @@ class PortfolioView < Jsonable
     @page = page
     @portfolio_title = portfolio_title
     @title = view_title
+    @date_indexed = Date.today
   end
 
   # Returns the user's image nodes on this page.
@@ -55,7 +56,7 @@ class PortfolioView < Jsonable
 
   # Returns the number of words on this page.
   def words
-    counter = WordsCounted::Counter.new @page.text
+    counter = WordsCounted::Counter.new text
     return counter.word_count
   end
 
@@ -108,7 +109,8 @@ class PortfolioView < Jsonable
   # for passing to Solr for adding as a document
   def to_solr(member)
     {:url => @url, :text => text, :portfolio_title => @portfolio_title,
-     :title => @title, :local_storage_dir => @local_storage_dir, :author => member.name}
+     :title => @title, :local_storage_dir => @local_storage_dir, :author => member.name, :indexDate => @date_indexed,
+     :nrImages => image_count, :nrWords => words, :nrUploadedImages => uploaded_images.length}
   end
 
   def ==(obj)
