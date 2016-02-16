@@ -143,6 +143,7 @@ module PortfolioAnalyzer
     opt.on('-s', '--solr_url SOLR_URL') { |o| options[:solr_url] = o }
     opt.on('-i', '--use_solr') { |o| options[:use_solr] = "y" }
     opt.on('-a', '--analyze_all') { |o| options[:analyze_all] = "y" }
+    opt.on('-a', '--download_images') { |o| options[:download_images] = "y" }
   end.parse!
 
   portfolio_download_dir = get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
@@ -175,6 +176,9 @@ module PortfolioAnalyzer
   grouplink = group_links[groupid].href
 
   group_download_dir = portfolio_download_dir + "/" + groupname.gsub(/\s/, '_')
+
+  download_images = get_parameter_from_option_or_ask(options[:download_images], "Download uploaded view images? : ", "n") == "y"
+  say "downloading view images ..." if download_images
 
   overwrite = false
   if (Dir.exists? group_download_dir) then
@@ -251,7 +255,7 @@ module PortfolioAnalyzer
         say "saving view '#{portfolio_view.title}' for member #{member.name} ..."
         view_download_path = views_download_dir + "/" + "view#{i}.html"
 
-        handle_view_images(img_download_dir, mahara_accessor, portfolio_view)
+        handle_view_images(img_download_dir, mahara_accessor, portfolio_view) if download_images
 
         # now saving view
         portfolio_view.save mahara_accessor.agent, view_download_path
@@ -277,7 +281,7 @@ module PortfolioAnalyzer
             i = i + 1
             view_download_path = views_download_dir + "/" + "view#{i}.html"
 
-            handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view)
+            handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view) if download_images
 
             # now saving view
             next_portfolio_view.save mahara_accessor.agent, view_download_path
