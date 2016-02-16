@@ -112,6 +112,8 @@
     <field name="nrWikipediaLinks"      type="int" indexed="true" stored="true" multiValued="false" />
     <field name="nrWords"               type="int" indexed="true" stored="true" multiValued="false" />
 
+    <field name="group"                 type="string" indexed="true" required="true" stored="true" multiValued="false"/>
+
     <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
        or Solr won't start. _version_ and update log are required for SolrCloud
     -->

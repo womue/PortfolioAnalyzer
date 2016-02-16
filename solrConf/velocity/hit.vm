@@ -45,24 +45,27 @@
 #end
 
 <div class="result-document">
-  <span class="result-title">
-    <img src="#{url_root}/img/filetypes/${filetype}.png" align="center">
+  <h3><span class="result-title">
+    ## <img src="#{url_root}/img/filetypes/${filetype}.png" align="center">
     #if($url)
-      <a href="$url"><b>$title</b></a>
+      <a href="$url"><b>${doc.getFirstValue("author")}: $title</b></a>
     #else
-        <b>$title</b>
+        <b>${doc.getFirstValue("author")}: $title</b>
     #end
-  </span>
+  </span></h3>
+  <p><small>(${doc.getFirstValue(" nrWords")} Wörter, ${doc.getFirstValue("nrImages")} Bilder
+        ($doc.getFirstValue("nrUploadedImages") hochgeladen, $doc.getFirstValue("nrWikipediaImages") aus Wikipedia),
+        $doc.getFirstValue("nrLinks") Links ($doc.getFirstValue("nrWikipediaLinks") nach Wikipedia))</small></p>
 
-  <div>
+  #*<div>
     id: $docId </br>
-  </div>
+  </div> *#
 
-  #set($pad = "")
+  <p>#set($pad = "")
   #foreach($v in $response.response.highlighting.get($docId).get("text"))
     $pad$esc.html($v).replace("HL_START","<em>").replace("HL_END","</em>")
     #set($pad = " ... ")
-  #end
+  #end</p>
 
 </div>
 
