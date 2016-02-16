@@ -16,7 +16,7 @@ require 'json'
 require_relative 'jsonable'
 
 class MaharaMember < Jsonable
-  attr_accessor :name, :mainlink, :groupid, :grouplink, :views
+  attr_accessor :name, :mainlink, :groupid, :grouplink, :portfolios, :views
 
   SERIALIZATION_FILE_NAME = 'memberinfo.json'
 
@@ -31,6 +31,7 @@ class MaharaMember < Jsonable
     @mainlink = mainlink
     @groupid = groupid
     @grouplink = grouplink
+    @portfolios = []
     @views = []
   end
 
