@@ -11,6 +11,7 @@
 # (c) Univ. of Education Weingarten, MEVIS, 2016
 #
 
+require 'time'
 require 'json'
 require 'json/add/core'
 require 'words_counted'
@@ -35,7 +36,7 @@ class PortfolioView < Jsonable
     @page = page
     @portfolio_title = portfolio_title
     @title = view_title
-    @date_indexed = Date.today
+    @time_indexed = Time::now
   end
 
   # Returns the user's image nodes on this page.
@@ -109,7 +110,7 @@ class PortfolioView < Jsonable
   # for passing to Solr for adding as a document
   def to_solr(member)
     {:url => @url, :text => text, :portfolio_title => @portfolio_title,
-     :title => @title, :local_storage_dir => @local_storage_dir, :author => member.name, :indexDate => @date_indexed,
+     :title => @title, :local_storage_dir => @local_storage_dir, :author => member.name, :indexDate => @time_indexed.utc.iso8601,
      :nrImages => image_count, :nrWords => words, :nrUploadedImages => uploaded_images.length}
   end
 

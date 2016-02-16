@@ -178,7 +178,7 @@ module PortfolioAnalyzer
 
   overwrite = false
   if (Dir.exists? group_download_dir) then
-    # overwrite? = agree("Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data?", true)     # currently disabled for ussage inside of RubyMine
+    # overwrite = agree("Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data?", true)     # currently disabled for ussage inside of RubyMine
     say "Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data? [y/n]"
     overwrite = ask('> ') { |q| q.default = 'y' } == 'y'
   end
