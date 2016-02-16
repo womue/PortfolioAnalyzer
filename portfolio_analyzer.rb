@@ -142,6 +142,7 @@ module PortfolioAnalyzer
     opt.on('-d', '--local_dir LOCAL_PORTFOLIO_DIR') { |o| options[:local_dir] = o }
     opt.on('-s', '--solr_url SOLR_URL') { |o| options[:solr_url] = o }
     opt.on('-i', '--use_solr') { |o| options[:use_solr] = "y" }
+    opt.on('-a', '--analyze_all') { |o| options[:analyze_all] = "y" }
   end.parse!
 
   portfolio_download_dir = get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
@@ -238,53 +239,59 @@ module PortfolioAnalyzer
     FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite
 
     portfolios_block.css('a.outer-link').each do |a|
-      portfolio_view = mahara_accessor.get_portfolio_view member, a.text.strip, a['href']
-      portfolio_views << portfolio_view
+      #todo: load JSON and read saved views for members
+      portfolio_name = a.text.strip
+      include_portfolio = get_parameter_from_option_or_ask(options[:analyze_all], "\t Include Portfolio \'" + portfolio_name + "\'? ", "y") == "y"
+      if include_portfolio
+        member.portfolios << portfolio_name
+        portfolio_view = mahara_accessor.get_portfolio_view member, portfolio_name, a['href']
+        portfolio_views << portfolio_view
 
-      # localy save the portfolio for possible further processing
-      say "saving view '#{portfolio_view.title}' for member #{member.name} ..."
-      view_download_path = views_download_dir + "/" + "view#{i}.html"
+        # localy save the portfolio for possible further processing
+        say "saving view '#{portfolio_view.title}' for member #{member.name} ..."
+        view_download_path = views_download_dir + "/" + "view#{i}.html"
 
-      handle_view_images(img_download_dir, mahara_accessor, portfolio_view)
+        handle_view_images(img_download_dir, mahara_accessor, portfolio_view)
 
-      # now saving view
-      portfolio_view.save mahara_accessor.agent, view_download_path
-      # instead, we should do something like:
-      # save nokogiri_doc.to_html
-      # since the Mechanize based save method of the portfolio view does not recognize changes
-      # made on the nokogiti doc level ...
+        # now saving view
+        portfolio_view.save mahara_accessor.agent, view_download_path
+        # instead, we should do something like:
+        # save nokogiri_doc.to_html
+        # since the Mechanize based save method of the portfolio view does not recognize changes
+        # made on the nokogiti doc level ...
 
-      # add to Solr
-      add_to_solr(member, portfolio_view, solr)
+        # add to Solr
+        add_to_solr(member, portfolio_view, solr)
 
-      # check for further views attached to this one
-      if mahara_accessor.has_more_views? portfolio_view then
-        say "processing additional views found for view '#{portfolio_view.title}' for user '#{member.name}'"
-        mahara_accessor.subsequent_views(portfolio_view).each do |link|
-          puts "processing view #{link}"
-          next_portfolio_view = mahara_accessor.get_portfolio_view(member, portfolio_view.portfolio_title + " - View 2", link)
+        # check for further views attached to this one
+        if mahara_accessor.has_more_views? portfolio_view then
+          say "processing additional views found for view '#{portfolio_view.title}' for user '#{member.name}'"
+          mahara_accessor.subsequent_views(portfolio_view).each do |link|
+            puts "processing view #{link}"
+            next_portfolio_view = mahara_accessor.get_portfolio_view(member, portfolio_view.portfolio_title + " - View 2", link)
 
-          portfolio_views << next_portfolio_view
+            portfolio_views << next_portfolio_view
 
-          # localy save the portfolio for possible further processing
-          say "saving view '#{next_portfolio_view.title}' for member #{member.name} ..."
-          i = i + 1
-          view_download_path = views_download_dir + "/" + "view#{i}.html"
+            # localy save the portfolio for possible further processing
+            say "saving view '#{next_portfolio_view.title}' for member #{member.name} ..."
+            i = i + 1
+            view_download_path = views_download_dir + "/" + "view#{i}.html"
 
-          handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view)
+            handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view)
 
-          # now saving view
-          next_portfolio_view.save mahara_accessor.agent, view_download_path
+            # now saving view
+            next_portfolio_view.save mahara_accessor.agent, view_download_path
 
-          # add to Solr
-          add_to_solr(member, next_portfolio_view, solr)
+            # add to Solr
+            add_to_solr(member, next_portfolio_view, solr)
+          end
         end
-      end
 
-      i = i + 1
-    end
-    member.views = portfolio_views
-    member.save member_download_dir
+        i = i + 1
+      end
+      member.views = portfolio_views
+      member.save member_download_dir
+      end
   end
 
   # create CSV table summarizing everything we found so far
