@@ -29,6 +29,6 @@ Facetting can only be done on indexed and stored fields. (I think)
 * _indexDate_: Date when the document is put into index
 * _lastModified_: Date when the portfolio was last changed
 * _nrImages_, _nrUploadedImages_, _nrWikipediaImages_, _nrLinks_, _nrWikipediaLinks_, _nrWords_: integers, indexed and stored.
-* 
+* _group_: string, indexed and stored
 * 
 
