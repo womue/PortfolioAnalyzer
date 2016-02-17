@@ -212,6 +212,7 @@ module PortfolioAnalyzer
   # TODO: the extract part should go somewhere to the MaharaAccessor class
   group_members.each do |member|
     puts "portfolios for member " + member.name
+    config_available = false
 
     member_download_dir = group_download_dir + "/" + member.name.gsub(/\s/, '_')
     # create member download dir if necessary
@@ -222,7 +223,18 @@ module PortfolioAnalyzer
         say "error creating download dir for member " + member.name + ": " + e.to_s
         next
       end
+    elsif options[:analyze_all] != "y"
+      # try to restore member state from JSON file
+      begin
+        member = MaharaMember.load(member_download_dir)
+        say "Restored member " + member.name
+        config_available = true unless member.portfolios == nil or member.portfolios.empty?
+      rescue Exception => e
+        say "Could not restore member " + member.name + ": " + e.to_s
+      end
     end
+
+
 
     mahara_user_views_page = agent.get(member.mainlink)
 
@@ -243,11 +255,18 @@ module PortfolioAnalyzer
     FileUtils::mkdir_p img_download_dir unless Dir.exists? img_download_dir or overwrite
 
     portfolios_block.css('a.outer-link').each do |a|
-      #todo: load JSON and read saved views for members
       portfolio_name = a.text.strip
-      include_portfolio = get_parameter_from_option_or_ask(options[:analyze_all], "\t Include Portfolio \'" + portfolio_name + "\'? ", "y") == "y"
+      include_portfolio = false
+      # use existing configuration if available
+      if config_available
+        include_portfolio = member.portfolios.include?(portfolio_name)
+      else
+        include_portfolio = get_parameter_from_option_or_ask(options[:analyze_all], "\t Include Portfolio \'" + portfolio_name + "\'? ", "y") == "y"
+        # update member settings depending on user input
+        member.portfolios << portfolio_name if include_portfolio
+      end
+
       if include_portfolio
-        member.portfolios << portfolio_name
         portfolio_view = mahara_accessor.get_portfolio_view member, portfolio_name, a['href']
         portfolio_views << portfolio_view
 
@@ -293,9 +312,11 @@ module PortfolioAnalyzer
 
         i = i + 1
       end
-      member.views = portfolio_views
-      member.save member_download_dir
-      end
+    end
+
+    member.views = portfolio_views
+    member.save member_download_dir
+    #end
   end
 
   # create CSV table summarizing everything we found so far
