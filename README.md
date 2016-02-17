@@ -14,3 +14,18 @@ The analyzer is to be started in a shell with portfolio_anaylzer as the main fil
 Moodle main page and the account credentials to access your individual Mahara dashboard. There, it will extract all your groups and allow you to select one of
 them. For this group, all members will be extracted (and the administrators filtered). So you get a list with the names of the
 members and the links to the corresponding Mahara pages. That's it so far!
+
+Gems
+====
+
+At present, the following gems are being used:
+* highline (>= 2.0.0.pre.develop.4)
+* fastimage (>= 1.8.1)
+* nokogiri (>= 1.6.7)
+* mechanize (>= 2.7.4)
+* rsolr (>= 1.1.1.pre1, 1.0.13)
+* rsolr-ext (>= 1.0.3)
+* rsolr-json (>= 0.0.1)
+* rsolr-nokogiri (>= 0.0.0)
+* sanitize (>= 4.0.1)
+* words_counted (>= 1.0.2)
