@@ -12,6 +12,7 @@
 #else
   #set($title = "$doc.getFirstValue('id').substring($math.add(1,$doc.getFirstValue('id').lastIndexOf('/')))")
 #end
+#if($title.endsWith(" - moopaed mahara"))#set($title=$title.substring(0,$math.sub($title.length(),17)))#end
 
 ## Date
 #if($doc.getFieldValue('attr_meta_creation_date'))
@@ -53,9 +54,9 @@
         <b>${doc.getFirstValue("author")}: $title</b>
     #end
   </span></h3>
-  <p><small>(${doc.getFieldValue("nrWords")} Wörter, ${doc.getFirstValue("nrImages")} Bilder
+  <p><small style="color:darkgray">(${doc.getFieldValue("nrWords")} Wörter, ${doc.getFirstValue("nrImages")} Bilder
         ($doc.getFirstValue("nrUploadedImages") hochgeladen#if($doc.getFirstValue("nrWikipediaImages")), $doc.getFirstValue("nrWikipediaImages") aus Wikipedia#end),
-        $doc.getOrDefault("nrLinks","X") Links ($doc.getOrDefault("nrWikipediaLinks","X") nach Wikipedia))</small></p>
+        $doc.getFieldValue("nrLinks") Links ($doc.getFieldValue("nrWikipediaLinks") nach Wikipedia))</small></p>
 
   #*<div>
     id: $docId </br>

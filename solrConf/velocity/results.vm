@@ -5,7 +5,7 @@
 
 <div id="results_list">
   <div class="pagination">
-    <span class="results-found">$page.results_found</span> $resource.results_found_in.insert(${response.responseHeader.QTime})
+    <span class="results-found">$page.results_found</span> found in ${response.responseHeader.QTime} ms
     $resource.page_of.insert($page.current_page_number,$page.page_count)
   </div>
 
@@ -13,7 +13,7 @@
 
   <div class="pagination">
     #link_to_previous_page
-    <span class="results-found">$page.results_found</span> $resource.results_found.
+    <span class="results-found">$page.results_found</span> found.
     $resource.page_of.insert($page.current_page_number,$page.page_count)
     #link_to_next_page
   </div>
