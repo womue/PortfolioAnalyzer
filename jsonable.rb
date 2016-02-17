@@ -45,8 +45,14 @@ class Jsonable
 
   # deprecated: does not comply to the new approach in to_json
   def from_json! string
-    JSON.load(string).each do |var, val|
-      self.instance_variable_set var, val
+    obj = JSON.parse(string)
+    for key, value in obj['data']
+      next if key == JSON.create_id
+      self.instance_variable_set key.to_sym, value
     end
+    #JSON.load(string).each do |var, val|
+    #  self.instance_variable_set var, val
+    #end
   end
+
 end
