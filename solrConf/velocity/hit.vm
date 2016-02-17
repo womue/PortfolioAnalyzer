@@ -1,4 +1,6 @@
 
+
+#* @vtlvariable name="doc" type="org.apache.solr.common.SolrDocument" *#
 #set($docId = $doc.getFirstValue($request.schema.uniqueKeyField.name))
 
 ## Load Mime-Type List and Mapping
@@ -17,8 +19,6 @@
 #else
   #set($date = "No date found")
 #end
-
-
 
 ## URL
 #if($doc.getFieldValue('url'))
@@ -53,9 +53,9 @@
         <b>${doc.getFirstValue("author")}: $title</b>
     #end
   </span></h3>
-  <p><small>(${doc.getFirstValue(" nrWords")} Wörter, ${doc.getFirstValue("nrImages")} Bilder
-        ($doc.getFirstValue("nrUploadedImages") hochgeladen, $doc.getFirstValue("nrWikipediaImages") aus Wikipedia),
-        $doc.getFirstValue("nrLinks") Links ($doc.getFirstValue("nrWikipediaLinks") nach Wikipedia))</small></p>
+  <p><small>(${doc.getFieldValue("nrWords")} Wörter, ${doc.getFirstValue("nrImages")} Bilder
+        ($doc.getFirstValue("nrUploadedImages") hochgeladen#if($doc.getFirstValue("nrWikipediaImages")), $doc.getFirstValue("nrWikipediaImages") aus Wikipedia#end),
+        $doc.getOrDefault("nrLinks","X") Links ($doc.getOrDefault("nrWikipediaLinks","X") nach Wikipedia))</small></p>
 
   #*<div>
     id: $docId </br>

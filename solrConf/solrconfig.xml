@@ -534,18 +534,21 @@
             <str name="facet">on</str>
             <str name="facet.missing">true</str>
             <str name="facet.field">author</str>
+            <str name="facet.field">nrWords</str>
+            <str name="facet.field">nrLinks</str>
             <str name="facet.field">title</str>
             <str name="facet.field">portfolio_title</str>
+            <str name="facet.field">group</str>
             <str name="facet.mincount">1</str>
             <str name="facet.maxcount">10</str>
 
             <!-- Highlighting defaults -->
             <str name="hl">on</str>
-            <str name="hl.fl">title portfolio_title author text</str>
+            <str name="hl.fl">title portfolio_title author text </str>
             <str name="hl.preserveMulti">true</str>
             <str name="hl.encoder">html</str>
-            <str name="hl.simple.pre">&lt;b&gt;</str>
-            <str name="hl.simple.post">&lt;/b&gt;</str>
+            <str name="hl.simple.pre">HL_START</str>
+            <str name="hl.simple.post">HL_END</str>
             <str name="f.title.hl.fragsize">0</str>
             <str name="f.title.hl.alternateField">title</str>
             <str name="f.name.hl.fragsize">0</str>
