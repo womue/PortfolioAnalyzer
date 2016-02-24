@@ -30,6 +30,9 @@ MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=
 
 DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
 
+INDIVIDUAL_PORTFOLIOS_DIR_NAME = "IndividualPortfolios"
+INDIVIDUAL_PORTFOLIOS_CONFIG_FILE_NAME = "IndividualDownloads.config"
+
 DEFAULT_SOLR_PORT = 8983
 DEFAULT_SOLR_URL = "http://localhost:#{DEFAULT_SOLR_PORT}/solr/MaharaPortfolio/"
 
@@ -133,6 +136,34 @@ module PortfolioAnalyzer
     puts "done!" unless solr == nil
   end
 
+  def self.read_user_config(download_dir)
+    puts "Reading user config from " + download_dir
+    user_names = []
+    individual_download_dir = download_dir + "/" + INDIVIDUAL_PORTFOLIOS_DIR_NAME
+
+    FileUtils::mkdir_p individual_download_dir
+
+    filename = download_dir + "/" + INDIVIDUAL_PORTFOLIOS_CONFIG_FILE_NAME
+
+    begin
+      file = nil
+      if not File.exists? filename
+        puts "Creating " + filename
+        file = File.open(filename, 'w')
+      else
+        file = File.new(filename, "r")
+        while (line = file.gets)
+          user_names << line
+        end
+      end
+      file.close
+    rescue => err
+      puts "Could not access user config file: #{err}"
+    end
+    user_names
+  end
+
+
   # parse options
   options = {}
   OptionParser.new do |opt|
@@ -143,7 +174,8 @@ module PortfolioAnalyzer
     opt.on('-s', '--solr_url SOLR_URL') { |o| options[:solr_url] = o }
     opt.on('-i', '--use_solr') { |o| options[:use_solr] = "y" }
     opt.on('-a', '--analyze_all') { |o| options[:analyze_all] = "y" }
-    opt.on('-a', '--download_images') { |o| options[:download_images] = "y" }
+    opt.on('-r', '--download_images') { |o| options[:download_images] = "y" }
+    opt.on('-o', '--only_individual_portfolios') { |o| options[:only_individual_portfolios] = "y" }
   end.parse!
 
   portfolio_download_dir = get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
@@ -204,12 +236,23 @@ module PortfolioAnalyzer
     say "warning: connection to Solr could not be established!"
   end
 
-  # extract members
-  group_members = mahara_accessor.extract_group_members(grouplink, groupname)
-  puts "extracted mumber of portfolio users: " + group_members.length.to_s
+  group_members = []
+
+  only_individual_portfolios = get_parameter_from_option_or_ask(options[:only_individual_portfolios], "Only load individual portfolios?: ", "n") == "y"
+  say "downloading individual portfolios" if only_individual_portfolios
+
+  if not only_individual_portfolios
+    # extract members
+    group_members = mahara_accessor.extract_group_members(grouplink, groupname)
+    puts "extracted mumber of portfolio users: " + group_members.length.to_s
+  end
+  read_user_config(group_download_dir).each do |user|
+    group_members.concat mahara_accessor.find_user(user)
+  end
 
   # extract view information
   # TODO: the extract part should go somewhere to the MaharaAccessor class
+  updated_members = []
   group_members.each do |member|
     puts "portfolios for member " + member.name
     config_available = false
@@ -316,6 +359,7 @@ module PortfolioAnalyzer
 
     member.views = portfolio_views
     member.save member_download_dir
+    updated_members << member
     #end
   end
 
@@ -325,7 +369,8 @@ module PortfolioAnalyzer
     CSV.open(csv_summary_filename, "wb", {:col_sep => ";"}) do |csv|
       csv << ["Nummer", "Name", "# Views"]
       i = 1
-      group_members.each do |member|
+      updated_members.each do |member|
+        puts member
         csv << [i, member.name, member.views.length]
         i = i + 1
       end

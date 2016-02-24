@@ -18,10 +18,12 @@ require 'openssl'
 I_KNOW_THAT_OPENSSL_VERIFY_PEER_EQUALS_VERIFY_NONE_IS_WRONG = nil
 OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 
+
 require 'mechanize'
 
 require_relative 'portfolio_analyzer_tools'
 require_relative 'portfolio_view'
+require_relative 'mahara_member'
 
 class MaharaAccessor
   attr_reader :agent, :moodle_login_url, :mahara_dahboard_url, :mahara_dashboard_page
@@ -113,12 +115,13 @@ class MaharaAccessor
     links
   end
 
-  # extracts all members from the main column of a Mahara groups page
+  # extracts all members from the main column of a Mahara groups or find contacts page
   # params:
   # - main_column: the main column
   # - grouplink: the link to the corresponding group to be passed to the members to be created
   # - groupname: the name to the corresponding group to be passed to the members to be created
-  def extract_members(main_column, grouplink, groupname)
+  # - is_group_search: true, if members from a group are extracted; false, if individual members are extracted
+  def extract_members(main_column, grouplink, groupname, is_group_search=true)
     group_members = []
     main_column.css('div.list-group-item').each do |row|
       student = nil
@@ -128,7 +131,7 @@ class MaharaAccessor
       img = row.css('img')[0]
       img_src = img['src']
       span = row.css('span')[1]
-      if (span.text.to_s.include? 'Teilnehmer') then
+      if (span.text.to_s.include? 'Teilnehmer' or not is_group_search) then
         puts "adding " + name + ": " + link + ", src=" + img_src
         member = MaharaMember.new(name, link, groupname, grouplink)
         group_members << member
@@ -159,5 +162,17 @@ class MaharaAccessor
     # an alternative, more general approach might be: mahara_group_members_page_2.css('div.list-group-item').each do |row|
 
     group_members = extract_members(main_column, grouplink, groupname)
+  end
+
+  # Performs a user search using the user query input field.
+  # Returns a list of MaharaMember objects
+  # - username: name of the user
+  def find_user(username)
+    user_search_form = @mahara_dashboard_page.form_with(:id => 'usf')
+    user_search_form.field_with(:name => "query").value = username
+    find_contacts_page = user_search_form.submit
+    # extract all users from the search result list
+    friendslist = find_contacts_page.at('#friendslist')
+    users = extract_members(friendslist, nil, 'individual', false)
   end
 end

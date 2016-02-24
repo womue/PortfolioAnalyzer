@@ -47,4 +47,8 @@ class MaharaMember < Jsonable
     member.from_json! s
     member
   end
+
+  def to_s
+    return "Member-Name: " + @name + "; mainlink: " + @mainlink + "; #Portfolios: " + @portfolios.length.to_s + "; #Views: " + @views.length.to_s
+  end
 end
