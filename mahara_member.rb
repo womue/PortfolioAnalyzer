@@ -42,9 +42,14 @@ class MaharaMember < Jsonable
 
   def self.load dir
     filename = dir + "/" + SERIALIZATION_FILE_NAME
-    s = File.open(filename, 'r') { |file| file.read }
-    member = MaharaMember.new
-    member.from_json! s
+    json_s = File.open(filename, 'r') { |file| file.read }
+    # old approach
+    # member = MaharaMember.new
+    # member.from_json! json_s
+    # member = json_create json_s
+    member = JSON.load(json_s)
+
+    # reconstruct views
     member
   end
 
