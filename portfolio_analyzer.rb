@@ -131,7 +131,12 @@ module PortfolioAnalyzer
   def self.add_to_solr(member, portfolio_view, solr)
     puts "adding view to Solr ... " unless solr == nil
     puts portfolio_view.to_solr(member)
-    solr.add portfolio_view.to_solr(member) unless solr == nil
+    begin
+      solr.add portfolio_view.to_solr(member) unless solr == nil
+    rescue Exception => e
+      say "ERROR: " + e.to_s
+    end
+
     # solr.add :id=>1, :price=>1.00 unless solr == nil
     puts "done!" unless solr == nil
   end
