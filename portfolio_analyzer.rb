@@ -30,7 +30,7 @@ MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=
 
 DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
 
-INDIVIDUAL_PORTFOLIOS_DIR_NAME = "IndividualPortfolios"
+#INDIVIDUAL_PORTFOLIOS_DIR_NAME = "IndividualPortfolios"
 INDIVIDUAL_PORTFOLIOS_CONFIG_FILE_NAME = "IndividualDownloads.config"
 
 DEFAULT_SOLR_PORT = 8983
@@ -144,9 +144,8 @@ module PortfolioAnalyzer
   def self.read_user_config(download_dir)
     puts "Reading user config from " + download_dir
     user_names = []
-    individual_download_dir = download_dir + "/" + INDIVIDUAL_PORTFOLIOS_DIR_NAME
-
-    FileUtils::mkdir_p individual_download_dir
+    #individual_download_dir = download_dir + "/" + INDIVIDUAL_PORTFOLIOS_DIR_NAME
+    #FileUtils::mkdir_p individual_download_dir
 
     filename = download_dir + "/" + INDIVIDUAL_PORTFOLIOS_CONFIG_FILE_NAME
 
