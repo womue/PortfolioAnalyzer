@@ -16,7 +16,7 @@ require 'json'
 require_relative 'jsonable'
 
 class MaharaMember < Jsonable
-  attr_accessor :name, :mainlink, :groupid, :grouplink, :portfolios, :views
+  attr_accessor :name, :mainlink, :groupid, :grouplink, :portfolios, :views, :local_dir
 
   SERIALIZATION_FILE_NAME = 'memberinfo.json'
 
@@ -33,6 +33,7 @@ class MaharaMember < Jsonable
     @grouplink = grouplink
     @portfolios = []
     @views = []
+    @local_dir = nil
   end
 
   def save dir
@@ -48,7 +49,7 @@ class MaharaMember < Jsonable
     # member.from_json! json_s
     # member = json_create json_s
     member = JSON.load(json_s)
-
+    member.local_dir = dir
     # reconstruct views
     member
   end
