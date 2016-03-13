@@ -18,10 +18,13 @@ require 'words_counted'
 require 'sanitize'
 
 require_relative 'jsonable'
+require_relative 'logging.rb'
 require_relative 'portfolio_analyzer_tools'
 require_relative 'html_to_plain_text'
 
 class PortfolioView < Jsonable
+  include Logging
+
   attr_accessor :url, :page, :portfolio_title, :title
   attr_accessor :local_storage_dir
 
@@ -62,6 +65,7 @@ class PortfolioView < Jsonable
   end
 
   # override to_json to include a special handling of pages (which are not serialized)
+  # deprecated ... not used!
   def to_json_old(*a)
     hash = {}
     self.instance_variables.each do |var|
@@ -70,6 +74,7 @@ class PortfolioView < Jsonable
     hash.to_json(*a)
   end
 
+  # deprecated - not used!
   def to_json_new(*a)
     res = {'json_class' => self.class.name}
     hash = {}
@@ -78,6 +83,12 @@ class PortfolioView < Jsonable
     end
     res['data'] = hash
     res.to_json(*a)
+  end
+
+  def self.json_create obj
+    logger.debug "calling 'json_create' for super class ..."
+    res_obj = super obj
+    res_obj
   end
 
   # Save the whole page to a local file
@@ -91,6 +102,8 @@ class PortfolioView < Jsonable
   end
 
   def nokogiri_doc
+    puts "nokogiri_doc: page is #{@page.class.to_s}"
+    puts @page
     @page.parser
   end
 
