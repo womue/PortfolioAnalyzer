@@ -4,7 +4,7 @@
 #
 # Description:
 # MaharaAccessor class, providing access to Mahara groups and bundling the
-# webscrapting functionality required to extract information from mahara group member pages.
+# webscraping functionality required to extract information from mahara group member pages.
 # This file might have to be mostly rewritten to provide Mahara access for a specific
 # Mahara service.
 #
