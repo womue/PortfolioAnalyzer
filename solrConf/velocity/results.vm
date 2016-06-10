@@ -3,6 +3,8 @@
 </div>
 
 
+<canvas id="wordCloudCanvas" width="800" height="300">&nbsp;</canvas>
+
 <div id="results_list">
   <div class="pagination">
     <span class="results-found">$page.results_found</span> found in ${response.responseHeader.QTime} ms

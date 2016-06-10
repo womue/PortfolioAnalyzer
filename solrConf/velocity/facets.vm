@@ -16,6 +16,41 @@
         #end
     #end
   #end ## end if field.values > 0
+
+
+  ## compose a word-cloud with the facets of the field title
+  #foreach($field in $response.facetFields)
+    #if("title"==$field.name)
+      #set($stopWords={"moopaed":0,"der":0, "mahara":0,"schwerpunkt":0,"informat":0,
+        "fundamental":0, "programmier":0, "ide":0, "schwerpunkt:":0, "in":0, "ruby":0,
+        "objektorientiert":0, "sprach":0, "it":0, "it3":0, "programmi":0, "portfolio":0})
+      <script type="text/javascript">
+          $(document).ready(function() {
+              window.wordCloudList = [
+                #foreach($facet in $field.values)
+                  #if($stopWords.containsKey($facet.name) || $facet.name.indexOf(':')!=-1)
+                  #else
+                      ["$facet.name", $math.mul($facet.count,5)],
+                  #end
+                #end
+              ];
+              var wordCloudElt = document.getElementById("wordCloudCanvas");
+              if(typeof(wordCloudList)!="undefined" && typeof(wordCloudElt)!="undefined") {
+                  WordCloud(wordCloudElt,
+                  { list: wordCloudList, weightFactor:0.99999, gridSize:30,
+                      click: function(item, dimension, event) {
+                          console.log("item is ", item);
+                          var sig = '&';
+                          if(window.location.href.indexOf('?')==-1) sig = '?';
+                          window.location.href = window.location.href + sig + 'fq=' + escape('${field.name}:"' + item[0] + '"');
+                      }
+                  } );
+          }
+              console.log("Have invoked WordCloud on " +wordCloudList.length + " words.");
+          });
+      </script>
+    #end
+  #end ## end if field.values > 0
 #end  ## end if facetFields > 0
 
 

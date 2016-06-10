@@ -538,10 +538,11 @@
             <str name="facet.field">nrWords</str>
             <str name="facet.field">nrLinks</str>
             <str name="facet.field">title</str>
+            <str name="facet.field">text</str>
             <str name="facet.field">portfolio_title</str>
             <str name="facet.field">group</str>
             <str name="facet.mincount">1</str>
-            <str name="facet.maxcount">10</str>
+            <str name="facet.maxcount">50</str>
             <str name="facet.range">nrWords</str>
             <str name="f.nrWords.facet.range.start">0</str>
             <str name="f.nrWords.facet.range.end">500000</str>
