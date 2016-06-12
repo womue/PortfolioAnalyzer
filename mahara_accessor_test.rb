@@ -11,8 +11,8 @@ class MaharaAccessorTest < Test::Unit::TestCase
   # Called before every test method runs. Can be used
   # to set up fixture information.
   def setup
-    username = 'Replace with your user name'
-    password = 'Replace with your password'
+    username = 'rebholzwg'
+    password = 'tramore'
     @ga = MaharaAccessor.new(username, password, MOOPAED_LOGIN_URL, MAHARA_DASHBOARD_URL)
   end
 

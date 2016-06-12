@@ -30,7 +30,8 @@ require_relative 'portfolio_statistics'
 
 DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
 
-CSV_SUMMARY_FILE_NAME = "Summary2.csv"
+CSV_SUMMARY_FILE_NAME = "Summary3.csv"
+MEMBER_STATS_FILE_PREFIX = "Details-"
 
 module LocalPortfolioAnalyzer
   def self.get_parameter_from_option_or_ask(option_value, msg, default_value=nil, echo=true)
@@ -100,10 +101,12 @@ module LocalPortfolioAnalyzer
       path = "file:" + member.local_dir + "/" + view_id
       page = agent.get path
       view.page = page
+      view_nr += 1
     end
   end
 
-  analyzers = [PortfolioStatistics::TotalWordsCounter.new]
+  analyzers = [PortfolioStatistics::DescriptiveAnalyzer.new]
+
 
   # create CSV table summarizing member portfolios
   csv_summary_filename = group_dir + "/" + CSV_SUMMARY_FILE_NAME
@@ -117,6 +120,29 @@ module LocalPortfolioAnalyzer
       csv << column_titles
       i = 1
       member_entries.each do |member|
+        csv_member_filename = group_dir + "/" + MEMBER_STATS_FILE_PREFIX + member.name + ".csv"
+        CSV.open(csv_member_filename, "wb", {:col_sep => ";"}) do |detail_file|
+          outline_analyzer = PortfolioStatistics::OutlineAnalyzer.new
+          detail_file << ["Name"] + outline_analyzer.get_column_titles
+          detail_file << ([member.name] + outline_analyzer.get_stats(member))
+          detail_file << ['']
+          table = outline_analyzer.get_view_stats member
+          table.each do |row|
+              detail_file << row
+          end
+          detail_file << ['']
+          table = outline_analyzer.external_links_list member
+          table.each do |row|
+            detail_file << row
+          end
+          detail_file << ['']
+          table = outline_analyzer.get_outline member
+          table.each do |row|
+            detail_file << row
+          end
+
+        end
+        #end
         data_row = [i, member.name, member.views.length]
         analyzers.each do |analyzer|
           data_row = data_row + analyzer.get_stats(member)
