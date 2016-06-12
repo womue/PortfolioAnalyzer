@@ -125,6 +125,8 @@ module PortfolioAnalyzer
           node[url_param] = image_download_path
         end
       end
+      # TODO: write manipulated document
+      # write HTML to file. Nokogiri provides the updated HTML: nokogiri_doc.to_html
     end
   end
 

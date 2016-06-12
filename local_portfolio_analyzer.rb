@@ -20,6 +20,8 @@ require 'logger'
 require 'optparse'
 require 'highline/import'
 require 'csv'
+require 'fastimage'
+require 'find'
 
 require 'mechanize'
 
@@ -40,6 +42,44 @@ module LocalPortfolioAnalyzer
     ask('> ') { |q| q.default = default_value; q.echo = echo }
   end
 
+  # Update the img nodes of the HTML document to link to the locally stored image files
+  # Parameters:
+  # - path_to_view:      the absolute path to the HTML document of the view
+  # - page:              the Nokogiri page representing the HTML document
+  # - img_download_dir: the absolute path to the local directory containing the image artefacts
+  def self.adapt_image_src(path_to_view, page, img_download_dir)
+    # Look for all uploaded images
+    artefact_images = page.images_with(:src => /download/)
+
+    artefact_images.each do |image|
+      basenamematch = /(?<=\?)[A-Za-z0-9=.]*/.match(File.basename image.uri.to_s)
+      break unless basenamematch != nil
+      basename = basenamematch[0]
+      # image_download_path = img_download_dir + "/" + basename
+      # puts image_download_path
+
+      # determine full image file name (including suffix)
+      image_file_name = nil
+      Find.find(img_download_dir) do |path|
+        if File.basename(path).start_with?(basename)
+          image_file_name = File.basename(path)
+          break
+        end
+      end
+
+      # update src attribute of image node
+      if image_file_name != nil
+        node = image.node
+        node["src"] = "../uploaded_images/" + image_file_name
+      end
+
+    end
+    # write manipulated HTML document
+    html_file = File.open(path_to_view + ".lokal", "w")
+    html_file << page.parser.to_html
+
+  end
+
   # set up logger
   logger = Logger.new(STDOUT)
   #logger.level = Logger::WARN
@@ -50,6 +90,7 @@ module LocalPortfolioAnalyzer
   OptionParser.new do |opt|
     opt.on('-d', '--local_dir LOCAL_PORTFOLIO_DIR') { |o| options[:local_dir] = o }
     opt.on('-a', '--download_images') { |o| options[:download_images] = "y" }
+    opt.on('-i', '--embed_local_images') { |o| options[:embed_local_images] = "y" }
   end.parse!
 
   logger.info "download images: #{options[:download_images]}"
@@ -57,6 +98,10 @@ module LocalPortfolioAnalyzer
   download_images = get_parameter_from_option_or_ask(options[:download_images], "Download uploaded view images? : ", "n") == "y"
 
   logger.info "downloading view images ..." if download_images
+
+  embed_local_images = get_parameter_from_option_or_ask(options[:embed_local_images], "Embed local images in view? : ", "n") == "y"
+  #embed_local_images = true
+  logger.info "Embedding local images in view ..." if embed_local_images
 
   portfolio_download_dir = get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
   logger.info "using portfolio download dir '#{portfolio_download_dir}'"
@@ -101,6 +146,7 @@ module LocalPortfolioAnalyzer
       path = "file:" + member.local_dir + "/" + view_id
       page = agent.get path
       view.page = page
+      if embed_local_images then adapt_image_src(member.local_dir + "/" + view_id, view.page, member.local_dir + "/uploaded_images") end
       view_nr += 1
     end
   end

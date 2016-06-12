@@ -61,7 +61,10 @@ module PortfolioStatistics
 
     # Only counts uploaded image artefacts
     def artefact_images_count page
-      artefact_images = page.css("img[src*='www.moopaed.de\/mahara\/artefact']")
+      # this is for uploaded artefacts in mahara
+      # artefact_images = page.css("img[src*='www.moopaed.de\/mahara\/artefact']")
+      # this is for local analysis
+      artefact_images = page.css("img[src*='uploaded_images']")
       return artefact_images.size
     end
 
