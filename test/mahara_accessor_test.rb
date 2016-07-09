@@ -1,7 +1,7 @@
 require 'test/unit'
 require 'highline/import'
 
-require_relative 'mahara_accessor'
+require_relative '../lib/portfolio_analyzer/mahara_accessor'
 
 MOOPAED_LOGIN_URL = 'https://www.moopaed.de/moodle/login/index.php'
 MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=3'

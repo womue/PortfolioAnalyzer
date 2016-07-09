@@ -20,6 +20,7 @@ module PortfolioStatistics
     class AbstractMethodInvocationError < RuntimeError;
     end
 
+    # @return [PortfolioStatistics]
     def initialize
       raise AbstractClassInstiationError, "Cannot instantiate this class directly"
     end

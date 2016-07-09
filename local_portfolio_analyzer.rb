@@ -25,10 +25,10 @@ require 'find'
 
 require 'mechanize'
 
-require_relative 'portfolio_analyzer_tools'
-require_relative 'mahara_member'
-require_relative 'portfolio_view'
-require_relative 'portfolio_statistics'
+require_relative 'lib/portfolio_analyzer/portfolio_analyzer_tools'
+require_relative 'lib/portfolio_analyzer/mahara_member'
+require_relative 'lib/portfolio_analyzer/portfolio_view'
+require_relative 'lib/portfolio_analyzer/portfolio_statistics'
 
 DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
 

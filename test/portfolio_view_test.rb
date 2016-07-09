@@ -3,7 +3,7 @@ require 'json'
 require 'mechanize'
 require 'nokogiri'
 
-require_relative 'portfolio_view'
+require_relative '../lib/portfolio_analyzer/portfolio_view'
 
 class PortfolioViewTest < Test::Unit::TestCase
 

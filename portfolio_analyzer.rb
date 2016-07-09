@@ -21,153 +21,13 @@ require 'fastimage'
 require 'rsolr'
 require 'csv'
 
-require_relative 'portfolio_analyzer_tools'
-require_relative 'mahara_accessor'
-require_relative 'mahara_member'
+require_relative 'lib/portfolio_analyzer/portfolio_analyzer_tools'
+require_relative 'lib/portfolio_analyzer/mahara_accessor'
+require_relative 'lib/portfolio_analyzer/mahara_member'
+require_relative 'lib/portfolio_analyzer'
 
 MOOPAED_LOGIN_URL = 'https://www.moopaed.de/moodle/login/index.php'
 MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=3'
-
-DEFAULT_PORTFOLIO_DOWNLOAD_DIR = "#{Dir.home}/MaharaPortfolios"
-
-#INDIVIDUAL_PORTFOLIOS_DIR_NAME = "IndividualPortfolios"
-INDIVIDUAL_PORTFOLIOS_CONFIG_FILE_NAME = "IndividualDownloads.config"
-
-DEFAULT_SOLR_PORT = 8983
-DEFAULT_SOLR_URL = "http://localhost:#{DEFAULT_SOLR_PORT}/solr/MaharaPortfolio/"
-
-CSV_SUMMARY_FILE_NAME = "Summary.csv"
-
-module PortfolioAnalyzer
-
-
-  # determines the suffix for image files for an image type
-  # params:
-  # - image_type: the id of the type for which the suffix shall be determined
-  def self.suffix_for_image_type(image_type)
-    case image_type
-      when :png
-        return ".png"
-      when :gif
-        return ".gif"
-      when :jpeg
-        return ".jpg"
-      when :svg
-        return ".svg"
-      when :bmp
-        return ".bmp"
-      else
-        say "suffix_for_image_type: warning - unknown image type: " + image_type.to_s
-    end
-  end
-
-  def self.get_parameter_from_option_or_ask(option_value, msg, default_value=nil, echo=true)
-    return option_value unless option_value == nil
-    say msg
-    ask('> ') { |q| q.default = default_value; q.echo = echo }
-  end
-
-  # Handles uploaded images found in a scraped Mahara view. These images are all
-  # downloaded to allow for offline access. In addition, references of such uploaded images in the view
-  # are adapted to link to the downloaded ones.
-  # TODO: the image link adaption is currently not functioning; this needs to be fixed!
-  # params:
-  # - img_download_dir: the directory, to where the images shall be downloaded
-  # - nokogiri_doc: the nokogiri representation of the page view
-  # - the corresponding portfolio view object
-  def self.handle_view_images(img_download_dir, mahara_accessor, portfolio_view)
-    nokogiri_doc = mahara_accessor.agent.page.parser
-
-    portfolio_view.uploaded_images.each do |image|
-      image_type = nil
-      basenamematch = /(?<=\?)[A-Za-z0-9=.]*/.match(File.basename image.uri.to_s)
-      break unless basenamematch != nil
-      basename = basenamematch[0]
-      image_download_path = img_download_dir + "/" + basename
-
-      say "saving image to #{image_download_path} ..."
-      begin
-        image.fetch.save image_download_path
-      rescue Mechanize::ResponseCodeError => ex
-        puts "An error of type #{ex.class} happened, message is #{ex.message}"
-      end
-
-      # try determining image type after download ... it did not work doing this before ... :-(
-      begin
-        image_type = FastImage.type(image_download_path, :raise_on_failure => true)
-      rescue FastImage::FastImageException => e
-        say "error identifying image type: " + e.to_s
-      end
-
-      new_image_download_path = image_download_path + suffix_for_image_type(image_type) unless (image_type == nil)
-
-      # rename image file now to contain the correct image suffix
-      if (image_type != nil) then
-        File.rename(image_download_path, new_image_download_path)
-        image_download_path = new_image_download_path
-      end
-
-      # adapt image urls in page document to match localy available uploaded_images
-
-      # this is would we like to do, but working with mechanize apparently does not
-      # provide us with the means to modify nodes directly ...
-      # image.src = image_download_path
-      #
-      # therefore, we switch to the nokogiri API here
-      tags = {
-          'img' => 'src'
-      }
-      nokogiri_doc.search(tags.keys.join(',')).each do |node|
-        url_param = tags[node.name]
-        src = node[url_param]
-        if (src == image.src) then
-          puts "adapting view image #{src} to #{image_download_path}"
-          node[url_param] = image_download_path
-        end
-      end
-      # TODO: write manipulated document
-      # write HTML to file. Nokogiri provides the updated HTML: nokogiri_doc.to_html
-    end
-  end
-
-  def self.add_to_solr(member, portfolio_view, solr)
-    puts "adding view to Solr ... " unless solr == nil
-    puts portfolio_view.to_solr(member)
-    begin
-      solr.add portfolio_view.to_solr(member) unless solr == nil
-    rescue Exception => e
-      say "ERROR: " + e.to_s
-    end
-
-    # solr.add :id=>1, :price=>1.00 unless solr == nil
-    puts "done!" unless solr == nil
-  end
-
-  def self.read_user_config(download_dir)
-    puts "Reading user config from " + download_dir
-    user_names = []
-    #individual_download_dir = download_dir + "/" + INDIVIDUAL_PORTFOLIOS_DIR_NAME
-    #FileUtils::mkdir_p individual_download_dir
-
-    filename = download_dir + "/" + INDIVIDUAL_PORTFOLIOS_CONFIG_FILE_NAME
-
-    begin
-      file = nil
-      if not File.exists? filename
-        puts "Creating " + filename
-        file = File.open(filename, 'w')
-      else
-        file = File.new(filename, "r")
-        while (line = file.gets)
-          user_names << line
-        end
-      end
-      file.close
-    rescue => err
-      puts "Could not access user config file: #{err}"
-    end
-    user_names
-  end
 
 
   # parse options
@@ -184,16 +44,16 @@ module PortfolioAnalyzer
     opt.on('-o', '--only_individual_portfolios') { |o| options[:only_individual_portfolios] = "y" }
   end.parse!
 
-  portfolio_download_dir = get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
+portfolio_download_dir = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:local_dir], "Please enter the directory for local member portfolios storage:", DEFAULT_PORTFOLIO_DOWNLOAD_DIR)
   say "using portfolio download dir '#{portfolio_download_dir}'"
 
   FileUtils::mkdir_p portfolio_download_dir unless Dir.exists? portfolio_download_dir
 
-  username = get_parameter_from_option_or_ask(options[:username], "Enter your username:  ")
+username = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:username], "Enter your username:  ")
   say "using username '#{username}'"
 
   # password = get_parameter_from_option_or_ask( options[:password], "Enter your password:  ", nil, "*")    # currently disabled for usage inside of RubyMine
-  password = get_parameter_from_option_or_ask(options[:password], "Enter your password:  ", nil, true)
+password = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:password], "Enter your password:  ", nil, true)
 
   mahara_accessor = MaharaAccessor.new(username, password, MOOPAED_LOGIN_URL, MAHARA_DASHBOARD_URL)
   agent = mahara_accessor.agent
@@ -215,7 +75,7 @@ module PortfolioAnalyzer
 
   group_download_dir = portfolio_download_dir + "/" + groupname.gsub(/\s/, '_')
 
-  download_images = get_parameter_from_option_or_ask(options[:download_images], "Download uploaded view images? : ", "n") == "y"
+download_images = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:download_images], "Download uploaded view images? : ", "n") == "y"
   say "downloading view images ..." if download_images
 
   overwrite = false
@@ -229,11 +89,11 @@ module PortfolioAnalyzer
 
   # say "Add views to Solr?:"
   # add_to_solr = ask('> ') { |q| q.default = 'y' } == 'y'
-  add_to_solr = get_parameter_from_option_or_ask(options[:use_solr], "Add views to Solr?: ", "n") == "y"
+add_to_solr = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:use_solr], "Add views to Solr?: ", "n") == "y"
   say "adding documents to solr" if add_to_solr
 
   solr_url = nil
-  solr_url = get_parameter_from_option_or_ask(options[:solr_url], "Enter Solr URL: ", DEFAULT_SOLR_URL) if add_to_solr
+solr_url = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:solr_url], "Enter Solr URL: ", DEFAULT_SOLR_URL) if add_to_solr
   say "using solr server at '#{solr_url}'" if add_to_solr
 
   solr = nil
@@ -244,7 +104,7 @@ module PortfolioAnalyzer
 
   group_members = []
 
-  only_individual_portfolios = get_parameter_from_option_or_ask(options[:only_individual_portfolios], "Only load individual portfolios?: ", "n") == "y"
+only_individual_portfolios = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:only_individual_portfolios], "Only load individual portfolios?: ", "n") == "y"
   say "downloading individual portfolios" if only_individual_portfolios
 
   if not only_individual_portfolios
@@ -252,7 +112,7 @@ module PortfolioAnalyzer
     group_members = mahara_accessor.extract_group_members(grouplink, groupname)
     puts "extracted mumber of portfolio users: " + group_members.length.to_s
   end
-  read_user_config(group_download_dir).each do |user|
+PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
     group_members.concat mahara_accessor.find_user(user)
   end
 
@@ -310,7 +170,7 @@ module PortfolioAnalyzer
       if config_available
         include_portfolio = member.portfolios.include?(portfolio_name)
       else
-        include_portfolio = get_parameter_from_option_or_ask(options[:analyze_all], "\t Include Portfolio \'" + portfolio_name + "\'? ", "y") == "y"
+        include_portfolio = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:analyze_all], "\t Include Portfolio \'" + portfolio_name + "\'? ", "y") == "y"
         # update member settings depending on user input
         member.portfolios << portfolio_name if include_portfolio
       end
@@ -386,5 +246,3 @@ module PortfolioAnalyzer
   end
 
   puts "done"
-
-end

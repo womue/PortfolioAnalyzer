@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/PortfolioAnalyzer.iml" filepath="$PROJECT_DIR$/PortfolioAnalyzer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/solrConf/solrConf.iml" filepath="$PROJECT_DIR$/solrConf/solrConf.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PortfolioAnalyzer.iml" filepath="$PROJECT_DIR$/.idea/PortfolioAnalyzer.iml" />
     </modules>
   </component>
 </project>
