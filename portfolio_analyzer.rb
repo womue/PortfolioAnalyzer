@@ -193,7 +193,7 @@ PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
         # made on the nokogiti doc level ...
 
         # add to Solr
-        add_to_solr(member, portfolio_view, solr)
+        PortfolioAnalyzer.add_to_solr(member, portfolio_view, solr)
 
         # check for further views attached to this one
         if mahara_accessor.has_more_views? portfolio_view then
@@ -215,7 +215,7 @@ PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
             next_portfolio_view.save mahara_accessor.agent, view_download_path
 
             # add to Solr
-            add_to_solr(member, next_portfolio_view, solr)
+            PortfolioAnalyzer.add_to_solr(member, next_portfolio_view, solr)
           end
         end
 
