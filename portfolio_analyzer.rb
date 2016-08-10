@@ -13,6 +13,7 @@
 # Usage: ruby portfolio_analyzer
 #
 
+require 'bundler/setup'
 require 'rubygems'
 require 'fileutils'
 require 'optparse'
@@ -21,10 +22,13 @@ require 'fastimage'
 require 'rsolr'
 require 'csv'
 
-require_relative 'lib/portfolio_analyzer/portfolio_analyzer_tools'
-require_relative 'lib/portfolio_analyzer/mahara_accessor'
-require_relative 'lib/portfolio_analyzer/mahara_member'
-require_relative 'lib/portfolio_analyzer'
+#require_relative 'lib/portfolio_analyzer/portfolio_analyzer_tools'
+#require 'portfolio_analyzer/portfolio_analyzer_tools'
+#require_relative 'lib/portfolio_analyzer/mahara_accessor'
+#require 'portfolio_analyzer/mahara_accessor'
+#require_relative 'lib/portfolio_analyzer/mahara_member'
+#require 'portfolio_analyzer/mahara_member'
+require 'portfolio_analyzer'
 
 MOOPAED_LOGIN_URL = 'https://www.moopaed.de/moodle/login/index.php'
 MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=3'
@@ -183,7 +187,7 @@ PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
         say "saving view '#{portfolio_view.title}' for member #{member.name} ..."
         view_download_path = views_download_dir + "/" + "view#{i}.html"
 
-        handle_view_images(img_download_dir, mahara_accessor, portfolio_view) if download_images
+        PortfolioAnalyzer.handle_view_images(img_download_dir, mahara_accessor, portfolio_view) if download_images
 
         # now saving view
         portfolio_view.save mahara_accessor.agent, view_download_path
@@ -209,7 +213,7 @@ PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
             i = i + 1
             view_download_path = views_download_dir + "/" + "view#{i}.html"
 
-            handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view) if download_images
+            PortfolioAnalyzer.handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view) if download_images
 
             # now saving view
             next_portfolio_view.save mahara_accessor.agent, view_download_path
