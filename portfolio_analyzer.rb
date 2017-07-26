@@ -87,9 +87,20 @@ download_images = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:do
     # overwrite = agree("Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data?", true)     # currently disabled for ussage inside of RubyMine
     say "Download dir for Mahara portfolios for group #{groupname} exists! Overwrite data? [y/n]"
     overwrite = ask('> ') { |q| q.default = 'y' } == 'y'
+
+    if (!overwrite) then
+      i = 1
+      new_download_dir = group_download_dir + ".#{i}"
+      while (Dir.exists? new_download_dir)
+        i = i + 1
+        new_download_dir = group_download_dir + ".#{i}"
+      end
+      group_download_dir = new_download_dir
+    end
   end
 
-  FileUtils::mkdir_p group_download_dir unless Dir.exists? group_download_dir or overwrite
+  # FileUtils::mkdir_p group_download_dir unless Dir.exists? group_download_dir or overwrite
+  FileUtils::mkdir_p group_download_dir
 
   # say "Add views to Solr?:"
   # add_to_solr = ask('> ') { |q| q.default = 'y' } == 'y'
@@ -102,7 +113,7 @@ solr_url = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:solr_url]
 
   solr = nil
   solr = RSolr.connect :url => solr_url if (add_to_solr)
-  if (solr == nil) then
+  if (solr == nil) and (add_to_solr) then
     say "warning: connection to Solr could not be established!"
   end
 
@@ -183,19 +194,23 @@ PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
         portfolio_view = mahara_accessor.get_portfolio_view member, portfolio_name, a['href']
         portfolio_views << portfolio_view
 
-        # localy save the portfolio for possible further processing
+        # locally save the portfolio for possible further processing
         say "saving view '#{portfolio_view.title}' for member #{member.name} ..."
         view_download_path = views_download_dir + "/" + "view#{i}.html"
+        modified_view_download_path = views_download_dir + "/" + "view#{i}-modified.html"
 
-        PortfolioAnalyzer.handle_view_images(img_download_dir, mahara_accessor, portfolio_view) if download_images
+        relative_path = Pathname.new(img_download_dir).relative_path_from(Pathname.new(views_download_dir)).to_path
+        modified_doc = PortfolioAnalyzer.handle_view_images(relative_path, mahara_accessor, portfolio_view) if download_images
 
         # now saving view
         portfolio_view.save mahara_accessor.agent, view_download_path
-        # instead, we should do something like:
-        # save nokogiri_doc.to_html
-        # since the Mechanize based save method of the portfolio view does not recognize changes
-        # made on the nokogiti doc level ...
 
+        # saving modified view with adapted image paths
+        # this has to be done with the nokogiri-based document object since
+        # the Mechanize based save method of the portfolio view does not recognize changes
+        # made on the nokogiri doc level ...
+        PortfolioAnalyzerTools.save_nokogiri_doc( modified_doc, modified_view_download_path) if modified_doc != nil
+        
         # add to Solr
         PortfolioAnalyzer.add_to_solr(member, portfolio_view, solr)
 
@@ -213,7 +228,9 @@ PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
             i = i + 1
             view_download_path = views_download_dir + "/" + "view#{i}.html"
 
-            PortfolioAnalyzer.handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view) if download_images
+            # PortfolioAnalyzer.handle_view_images(img_download_dir, mahara_accessor, next_portfolio_view) if download_images
+            relative_path = Pathname.new(img_download_dir).relative_path_from(Pathname.new(views_download_dir))  .to_path
+            PortfolioAnalyzer.handle_view_images(relative_path, mahara_accessor, next_portfolio_view) if download_images
 
             # now saving view
             next_portfolio_view.save mahara_accessor.agent, view_download_path
