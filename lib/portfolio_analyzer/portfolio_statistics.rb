@@ -128,9 +128,11 @@ module PortfolioStatistics
     def get_stats view
       res = Hash.new
       res[:nrWords] = word_count(view)
-      res[:nrExternalLinks] = external_links(view)
+      res[:nrExternalLinks] = external_links(view).size
+      res[:externalLinks] = external_links(view)
       res[:nrImages] = images(view).size
       res[:nrUploadedImages] = uploaded_images(view).size
+      res[:upLoadedImages] = uploaded_images(view)
       res[:nrWikipediaImages] = images_from_domain(view, 'wikipedia').size
       res[:nrInstagramImages] = images_from_domain(view, 'instagram').size
       res[:nrFlickrImages] = images_from_domain(view, 'flickr').size
