@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/PA.iml" filepath="$PROJECT_DIR$/.idea/PA.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/PortfolioAnalyzer.iml" filepath="$PROJECT_DIR$/.idea/PortfolioAnalyzer.iml" />
     </modules>
   </component>
