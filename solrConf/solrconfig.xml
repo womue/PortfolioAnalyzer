@@ -24,7 +24,6 @@
     <!-- In all configuration below, a prefix of "solr." for class names
          is an alias that causes solr to search appropriate packages,
          including org.apache.solr.(search|update|request|core|analysis)
-
          You may also specify a fully qualified Java classname if you
          have your own custom plugins.
       -->
@@ -36,6 +35,23 @@
          affect both how text is indexed and queried.
     -->
     <luceneMatchVersion>5.4.1</luceneMatchVersion>
+
+    <!--Automatically Generate Document Identifiers
+        Blacklight needs an ID to generate an URL for the detail view
+        But Ruby Portfolio-Extractor comes with 'url' as unique key.
+        So Blacklight produces Urls like: http://localhost:3000/catalog/http://mahara...
+        Therefore a field 'id' is introduced and automatically populated.
+        See: https://wiki.apache.org/solr/UniqueKey
+        See: http://solr.pl/en/2013/07/08/automatically-generate-document-identifiers-solr-4-x/
+    -->
+    <updateRequestProcessorChain>
+        <processor class="solr.UUIDUpdateProcessorFactory">
+            <str name="fieldName">id</str>
+        </processor>
+        <processor class="solr.LogUpdateProcessorFactory" />
+        <processor class="solr.RunUpdateProcessorFactory" />
+    </updateRequestProcessorChain>
+
 
 
     <lib dir="${solr.install.dir:../../../..}/contrib/extraction/lib" regex=".*\.jar" />
@@ -397,7 +413,6 @@
              The settings below authorize Solr to fetch remote files, You
              should make sure your system has some authentication before
              using enableRemoteStreaming="true"
-
           -->
         <requestParsers enableRemoteStreaming="true"
                         multipartUploadLimitInKB="2048000"
@@ -405,9 +420,7 @@
                         addHttpRequestToContext="false"/>
 
         <!-- HTTP Caching
-
              Set HTTP caching related parameters (for proxy caches and clients).
-
              The options below instruct Solr not to output any HTTP Caching
              related headers
           -->
@@ -418,7 +431,6 @@
     <!-- Request Handlers
 
          http://wiki.apache.org/solr/SolrRequestHandler
-
          Incoming queries will be dispatched to a specific handler by name
          based on the path specified in the request.
 
@@ -432,29 +444,68 @@
 
          If a Request Handler is declared with startup="lazy", then it will
          not be initialized until the first request that uses it.
-
       -->
-    <!-- SearchHandler
 
-         http://wiki.apache.org/solr/SearchHandler
+    <!-- ........ BLACKLIGHT SEARCH HANDLER ........
+    Blacklight expects two request handlers to be defined  one to handle general search 
+    requests and one to handle single-document lookup. The names of these request handlers 
+    are configurable, but are called "search" and "document" respectively, out of the box -->
 
-         For processing Search Queries, the primary Request Handler
-         provided with Solr is "SearchHandler" It delegates to a sequent
-         of SearchComponents (see below) and supports distributed
-         queries across multiple shards
-      -->
+    <!-- ........ SEARCH HANDLER ........
+    http://wiki.apache.org/solr/SearchHandler
+    For processing Search Queries, the primary Request Handler
+    provided with Solr is "SearchHandler" It delegates to a sequent
+    of SearchComponents (see below) and supports distributed
+    queries across multiple shards -->
+
+    <!-- NICHT AKTIV?! -->
+    <requestHandler name="/search" class="solr.SearchHandler">
+        <lst name="defaults">
+            <str name="q">*:*</str>
+            <str name="q.alt">*:*</str>
+            <str name="defType">dismax</str>
+            <str name="echoParams">explicit</str>
+            <int name="rows">10</int>
+
+            <str name="facet">on</str>
+           	<str name="facet.missing">false</str>
+            <str name="facet.field">author</str>
+            <str name="facet.mincount">1</str>
+        </lst>
+    </requestHandler>
+    
+
+     <!-- AKTIV! 
+     default values for query parameters can be specified, 
+     these will be overwritten by parameters in the request-->
     <requestHandler name="/select" class="solr.SearchHandler">
-        <!-- default values for query parameters can be specified, these
-             will be overridden by parameters in the request
-          -->
         <lst name="defaults">
             <str name="echoParams">explicit</str>
             <int name="rows">10</int>
+            <!-- Highlighting defaults -->
+            <str name="hl">true</str>
+            <str name="hl.fl">text, author</str>
+            <str name="hl.preserveMulti">true</str>
+            <str name="hl.encoder">html</str>
+            <str name="hl.simple.pre">&lt;b&gt;</str>
+            <str name="hl.simple.post">&lt;/b&gt;</str>
+			<str name="f.text.hl.fragsize">280</str>
+			<str name="f.text.hl.snippets">3</str>
+			<str name="hl.bs.separator">Hallo</str>
+			<!--                        
+            <str name="f.title.hl.fragsize">0</str>
+            <str name="f.title.hl.alternateField">title</str>
+            <str name="f.author.hl.fragsize">0</str>
+            <str name="f.author.hl.alternateField">author</str>
+            <str name="f.text.hl.snippets">3</str>
+            <str name="f.text.hl.fragsize">300</str>
+            <str name="f.content.hl.alternateField">content</str>
+            <str name="f.content.hl.maxAlternateFieldLength">350</str>
+			-->
         </lst>
-
     </requestHandler>
 
-    <!-- A request handler that returns indented JSON by default -->
+    <!-- Eequest handler: returns indented JSON by default -->
     <requestHandler name="/query" class="solr.SearchHandler">
         <lst name="defaults">
             <str name="echoParams">explicit</str>
@@ -464,18 +515,14 @@
         </lst>
     </requestHandler>
 
-
-
-    <!-- A request handler that returns indented JSON by default -->
-    <requestHandler name="/query" class="solr.SearchHandler">
+    <requestHandler name="/cohort" class="solr.SearchHandler">
         <lst name="defaults">
             <str name="echoParams">explicit</str>
-            <str name="wt">json</str>
             <str name="indent">true</str>
-            <str name="df">text</str>
+            <str name="df">cohort</str>
+            <int name="rows">10</int>
         </lst>
     </requestHandler>
-
 
     <!--
       The export request handler is used to export full sorted result sets.
@@ -521,7 +568,7 @@
             </str>
             <str name="mm">100%</str>
             <str name="q.alt">*:*</str>
-            <str name="rows">10</str>
+            <str name="rows">18</str>
             <str name="df">text</str>
             <str name="fl">*,score</str>
 
@@ -532,21 +579,22 @@
             <int name="mlt.count">3</int>
 
             <!-- Faceting defaults -->
-            <str name="facet">on</str>
+            <!-- <str name="facet">on</str>-->
+            <str name="facet">true</str>
             <str name="facet.missing">true</str>
             <str name="facet.field">author</str>
-            <str name="facet.field">nrWords</str>
+            <!--<str name="facet.field">nrWords</str>-->
             <str name="facet.field">nrLinks</str>
             <str name="facet.field">title</str>
-            <str name="facet.field">text</str>
+            <!--<str name="facet.field">text</str>-->
             <str name="facet.field">portfolio_title</str>
             <str name="facet.field">group</str>
             <str name="facet.mincount">1</str>
             <str name="facet.maxcount">50</str>
-            <str name="facet.range">nrWords</str>
-            <str name="f.nrWords.facet.range.start">0</str>
-            <str name="f.nrWords.facet.range.end">500000</str>
-            <str name="f.nrWords.facet.range.gap">1000</str>
+            <!--<str name="facet.range">nrWords</str>-->
+            <!--<str name="f.nrWords.facet.range.start">0</str>-->
+            <!--<str name="f.nrWords.facet.range.end">500000</str>-->
+            <!--<str name="f.nrWords.facet.range.gap">1000</str>-->
 
 
             <!-- Highlighting defaults -->
@@ -583,7 +631,7 @@
           <str>spellcheck</str>
         </arr> -->
     </requestHandler>
-
+    
     <initParams path="/update/**,/query,/select,/tvrh,/spell">
         <lst name="defaults">
             <str name="df">text</str>
@@ -798,7 +846,7 @@
             </boundaryScanner>
         </highlighting>
     </searchComponent>
-       -->
+       
 
     <!-- Terms Component
 
