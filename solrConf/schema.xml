@@ -488,12 +488,14 @@
     <!-- .......... FIELDS IN OUR APPLICATION ..........-->
 
     <fields>
-      <!-- portfolio_title is deprecated, use portfolioTitle instead -->
-      <!-- local_storage_dir is deprecated, use localStorageDir instead -->
+      
+      <!-- portfolio_title will soon be deprecated, use portfolioTitle instead -->
       <field name="portfolio_title" type="text_de" indexed="true" stored="true" multiValued="false"/>
+      <!-- local_storage_dir will soon be deprecated, use localStorageDir instead -->
+      <field name="local_storage_dir" type="string" indexed="true" stored="true" multiValued="false"/>
+      
       <field name="portfolioTitle" type="text_de" indexed="true" stored="true" multiValued="false"/>
       <field name="title" type="text_de" indexed="true" stored="true" multiValued="false"/>
-      <field name="local_storage_dir" type="string" indexed="true" stored="true" multiValued="false"/>
       <field name="localStorageDir" type="string" indexed="true" stored="true" multiValued="false"/>
       <field name="author" type="string" indexed="true" stored="true" multiValued="false"/>
       <field name="author_de" type="text_de" indexed="true"/>
