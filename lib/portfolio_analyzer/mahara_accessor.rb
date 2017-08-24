@@ -82,10 +82,13 @@ class MaharaAccessor
   # @param [String] url
   def get_portfolio_view member, portfolio_name, url
     view_page = @agent.get(url)
+
+    modified_date = @agent.get(url).response["last-modified"]
+
     # Try to extract the view title. That is, we are checking for an h1 tag ...
     view_title = guess_title(view_page)
 
-    view = PortfolioView.new url, view_page, member.name, portfolio_name, view_title, member.groupid
+    view = PortfolioView.new url, view_page, member.name, portfolio_name, view_title, member.groupid, modified_date
     return view
   end
 
