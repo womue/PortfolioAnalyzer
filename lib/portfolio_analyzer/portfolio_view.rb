@@ -31,7 +31,7 @@ require_relative 'portfolio_statistics'
 class PortfolioView < Jsonable
   include Logging
 
-  attr_accessor :url, :page, :portfolio_title, :title, :member_name, :group_name
+  attr_accessor :url, :page, :portfolio_title, :title, :member_name, :group_name, :modified_date
   attr_accessor :local_storage_dir, :analyzer
 
   # Constructs a PortfolioView instance
@@ -46,7 +46,8 @@ class PortfolioView < Jsonable
   # @param [String] portfolio_title
   # @param [String] view_title
   # @param [String] group_name
-  def initialize url=nil, page=nil, member_name=nil, portfolio_title=nil, view_title=nil, group_name=nil
+  # @param [String] modified_date
+  def initialize url=nil, page=nil, member_name=nil, portfolio_title=nil, view_title=nil, group_name=nil, modified_date=nil
     @url = url
     @page = page
     @member_name = member_name
@@ -54,6 +55,7 @@ class PortfolioView < Jsonable
     @title = view_title
     @group_name = group_name
     @time_indexed = Time::now
+    @modified_date = modified_date
     @analyzer = PortfolioStatistics::DescriptiveViewAnalyzer.new
   end
 

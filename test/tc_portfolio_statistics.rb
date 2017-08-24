@@ -1,7 +1,7 @@
 require 'test/unit'
 require 'mechanize'
 
-require_relative 'lib/portfolio_analyzer/portfolio_statistics'
+require_relative '../lib/portfolio_analyzer/portfolio_statistics'
 
 class PortfolioStatisticsTest < Test::Unit::TestCase
   @agent = nil

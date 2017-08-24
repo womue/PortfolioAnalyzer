@@ -74,10 +74,10 @@ password = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:password]
 
   Kernel.exit(0) if (groupid == group_links.length)
 
-  groupname = group_links[groupid].text
+  groupname = group_links[groupid].text.gsub(/\(Systemverwalter\)/, '').strip
   grouplink = group_links[groupid].href
 
-  group_download_dir = portfolio_download_dir + "/" + groupname.gsub(/\s/, '_')
+  group_download_dir = portfolio_download_dir + "/" + groupname.gsub(/\s/, '_') .gsub(/\//, '-')
 
 download_images = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:download_images], "Download uploaded view images? : ", "n") == "y"
   say "downloading view images ..." if download_images
@@ -218,7 +218,7 @@ PortfolioAnalyzer.read_user_config(group_download_dir).each do |user|
         if mahara_accessor.has_more_views? portfolio_view then
           say "processing additional views found for view '#{portfolio_view.title}' for user '#{member.name}'"
           mahara_accessor.subsequent_views(portfolio_view).each do |link|
-            puts "processing view #{link}"
+            say "processing view #{link}"
             next_portfolio_view = mahara_accessor.get_portfolio_view(member, portfolio_view.portfolio_title + " - View 2", link)
 
             portfolio_views << next_portfolio_view

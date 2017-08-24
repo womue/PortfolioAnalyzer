@@ -68,7 +68,7 @@ module PortfolioStatistics
     def initialize
       @titles = [:nrWords => '# Words', :nrExternalLinks => '# Ext.Refs', :nrImages => '# Images', :nrUploadedImages => '# Image artefacts',
                  :nrWikipediaImages => '# Wikipedia images', :nrInstagramImages => '# Instagram images', :nrFlickrImages => '# Flickr images',
-                 :nrSnapchatImages => '# Snapchat images', :nrPinterestImages => '# Pinterest images']
+                 :nrSnapchatImages => '# Snapchat images', :nrPinterestImages => '# Pinterest images', :lastModified => 'Last modified']
     end
 
     # Returns nr of words
@@ -129,7 +129,7 @@ module PortfolioStatistics
       res = Hash.new
       res[:nrWords] = word_count(view)
       res[:nrExternalLinks] = external_links(view).size
-      res[:externalLinks] = external_links(view)
+      # res[:externalLinks] = external_links(view)
       res[:nrImages] = images(view).size
       res[:nrUploadedImages] = uploaded_images(view).size
       res[:upLoadedImages] = uploaded_images(view)
@@ -138,6 +138,7 @@ module PortfolioStatistics
       res[:nrFlickrImages] = images_from_domain(view, 'flickr').size
       res[:nrSnapchatImages] = images_from_domain(view, 'snapchat').size
       res[:nrPinterestImages] = images_from_domain(view, 'pinterest').size
+      res[:lastModified] = view.modified_date
       return res
     end
   end
