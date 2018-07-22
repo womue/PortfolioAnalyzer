@@ -28,9 +28,11 @@ require 'csv'
 #require 'portfolio_analyzer/mahara_accessor'
 #require_relative 'lib/portfolio_analyzer/mahara_member'
 #require 'portfolio_analyzer/mahara_member'
-require 'portfolio_analyzer'
+require_relative 'lib/portfolio_analyzer'
 
-MOOPAED_LOGIN_URL = 'https://www.moopaed.de/moodle/login/index.php'
+# New login behaviour based on shibboleth service.
+# By following this URL, the service generates a new session
+MOOPAED_LOGIN_URL = 'https://www.moopaed.de/moodle/auth/shibboleth/index.php' 
 MAHARA_DASHBOARD_URL = 'https://www.moopaed.de/moodle/auth/mnet/jump.php?hostid=3'
 
 
@@ -69,6 +71,7 @@ password = PortfolioAnalyzer.get_parameter_from_option_or_ask(options[:password]
   end
 
   group_links = mahara_accessor.extract_group_links
+  
 
   groupid = PortfolioAnalyzerTools.select_choice("Select mahara group for analysis", group_links)
 

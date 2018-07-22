@@ -45,12 +45,19 @@ class MaharaAccessor
 
   # Connects to moodle using the provided credentials and open the corresponding user's Mahara dashboard page.
   def open_mahara
-    # open moodle
+    # open moodle url which redirects to shibboleth service
     signin_page = @agent.get(@moodle_login_url)
-    my_moodle_dashboard_page = signin_page.form_with(:id => 'login') do |form|
-      form.username = @username
-      form.password = @password
-    end.submit
+
+    # Fill in shibboleth login form
+    form = signin_page.forms[0]
+    form.field_with(:id => "username").value = @username
+    form.field_with(:id => "password").value = @password
+    javascript_warning_page = form.click_button
+
+    # The login system wants a confirmation: 
+    # Since your browser (mechanize) does not support JavaScript, you must press the Continue button once to proceed. 
+    form = javascript_warning_page.forms[0]
+    my_moodle_dashboard_page = form.submit
 
     # now try to access the mahara page directly ... seems much easier than following
     # the link on the page ...
